@@ -28,6 +28,7 @@ from src.ui_theme import (
 )
 
 FAVICON_PATH = PROJECT_ROOT / "assets" / "icons" / "favicon.png"
+FAVICON_ICO_PATH = PROJECT_ROOT / "assets" / "icons" / "favicon.ico"
 if not FAVICON_PATH.exists():
     FAVICON_PATH = PROJECT_ROOT / "assets" / "favicon.png"
 if not FAVICON_PATH.exists():
@@ -35,8 +36,9 @@ if not FAVICON_PATH.exists():
 
 st.set_page_config(
     page_title="LaTeX Resume Generator — NVIDIA AI",
-    page_icon=str(FAVICON_PATH) if FAVICON_PATH.exists() else "📄",
+    page_icon=str(FAVICON_ICO_PATH) if FAVICON_ICO_PATH.exists() else (str(FAVICON_PATH) if FAVICON_PATH.exists() else "📄"),
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 
 # 1. Detecção automática de idioma e tema padrão do usuário (Navegador / Sistema Operacional)
@@ -52,8 +54,22 @@ if "auto_lang" not in st.session_state:
 if "auto_theme" not in st.session_state:
     st.session_state["auto_theme"] = detect_default_theme(headers_dict)
 
+# Inicializa estado dos botões de toggle (idioma UI, tema, idioma PDF)
+if "ui_lang" not in st.session_state:
+    st.session_state["ui_lang"] = "en-us" if st.session_state["auto_lang"] == "en-us" else "pt-br"
+if "active_theme" not in st.session_state:
+    st.session_state["active_theme"] = "light" if st.session_state["auto_theme"] == "light" else "dark"
+if "resume_lang" not in st.session_state:
+    st.session_state["resume_lang"] = st.session_state["ui_lang"]
+
 default_lang_idx = 1 if st.session_state["auto_lang"] == "en-us" else 0
 default_theme_idx = 0 if st.session_state["auto_theme"] == "light" else 1
+
+# Resolve idioma/tema do estado da sessão (usado pelos botões de toggle na sidebar)
+ui_lang = st.session_state.get("ui_lang", "en-us" if st.session_state["auto_lang"] == "en-us" else "pt-br")
+active_theme = st.session_state.get("active_theme", "light" if st.session_state["auto_theme"] == "light" else "dark")
+resume_lang = normalize_lang(st.session_state.get("resume_lang", ui_lang))
+txt = UI_TEXT[ui_lang]
 
 with st.sidebar:
     if FAVICON_PATH.exists():
@@ -61,29 +77,38 @@ with st.sidebar:
     st.markdown("### **LaTeX Resume Generator**\n*NVIDIA NIM • Multi-Provider*")
     st.divider()
 
-    lang_choice = st.selectbox(
-        "🌐 Idioma / Language",
-        options=["🇧🇷 Português (pt-BR)", "🇺🇸 English (en-US)"],
-        index=default_lang_idx,
-    )
-    ui_lang = "en-us" if "en-US" in lang_choice else "pt-br"
-    txt = UI_TEXT[ui_lang]
+    # Idioma da interface — botão de toggle único
+    st.markdown(f"**{txt['lang_selector_label']}**")
+    if st.button(
+        ("🇧🇷 Português (pt-BR)" if ui_lang == "pt-br" else "🇺🇸 English (en-US)"),
+        key="lang_toggle",
+        use_container_width=True,
+        type="primary",
+    ):
+        st.session_state["ui_lang"] = "en-us" if ui_lang == "pt-br" else "pt-br"
+        st.rerun()
 
-    theme_choice = st.radio(
-        txt["theme_label"],
-        options=[txt["theme_light"], txt["theme_dark"]],
-        index=default_theme_idx,
-        horizontal=True,
-        help=txt["auto_detected_badge"],
-    )
-    active_theme = "light" if theme_choice == txt["theme_light"] else "dark"
+    # Tema da interface — botão de toggle único
+    st.markdown(f"**{txt['theme_label']}**")
+    if st.button(
+        (txt["theme_light"] if active_theme == "light" else txt["theme_dark"]),
+        key="theme_toggle",
+        use_container_width=True,
+        type="primary",
+    ):
+        st.session_state["active_theme"] = "dark" if active_theme == "light" else "light"
+        st.rerun()
 
-    resume_lang_choice = st.selectbox(
-        "📝 Idioma do Currículo PDF / Resume Output Language",
-        options=["🇧🇷 Português (pt-BR)", "🇺🇸 English (en-US)"],
-        index=1 if ui_lang == "en-us" else 0,
-    )
-    resume_lang = normalize_lang("en-us" if "en-US" in resume_lang_choice else "pt-br")
+    # Idioma do PDF — botão de toggle único
+    st.markdown(f"**{txt.get('resume_lang_label', '📝 Idioma do Currículo PDF / Resume Output Language')}**")
+    if st.button(
+        ("🇧🇷 Português (pt-BR)" if resume_lang == "pt-br" else "🇺🇸 English (en-US)"),
+        key="pdf_lang_toggle",
+        use_container_width=True,
+        type="primary",
+    ):
+        st.session_state["resume_lang"] = "en-us" if resume_lang == "pt-br" else "pt-br"
+        st.rerun()
 
     latex_ok, latex_ver = check_latex_compiler()
     if latex_ok:
@@ -91,6 +116,13 @@ with st.sidebar:
     else:
         st.error(txt["latex_missing_lbl"])
 
+    st.divider()
+    generate_btn = st.button(
+        txt["gen_btn"],
+        type="primary",
+        use_container_width=True,
+        key="sidebar_generate_btn",
+    )
     st.divider()
     st.header(txt["sidebar_header"])
 
@@ -193,6 +225,61 @@ with head_col2:
     st.title(txt["app_title"])
 st.caption(txt["app_caption"])
 
+# Botão de gerar currículo: aparece na barra lateral quando aberta,
+# fixado no canto superior esquerdo quando a barra lateral está oculta.
+st.markdown(
+    """
+    <style>
+    .fixed-generate-btn {
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+        z-index: 9999;
+        display: none;
+    }
+    </style>
+    <button class="fixed-generate-btn" id="fixed-generate-btn" onclick="clickSidebarGenerate()">🚀 """ + txt["gen_btn"] + """</button>
+    <script>
+    (function() {
+        var btn = document.getElementById('fixed-generate-btn');
+        if (!btn) return;
+        function check() {
+            var collapsed = document.querySelector('[data-testid="collapsedControl"]');
+            var isCollapsed = collapsed && !collapsed.hidden && collapsed.offsetParent !== null;
+            btn.style.display = isCollapsed ? 'inline-flex' : 'none';
+        }
+        check();
+        setInterval(check, 400);
+    })();
+    function clickSidebarGenerate() {
+        var buttons = document.querySelectorAll('button:not(.fixed-generate-btn)');
+        for (var i = 0; i < buttons.length; i++) {
+            var t = buttons[i].textContent || '';
+            if (t.includes('Gerar Currículo') || t.includes('Generate Resume')) {
+                buttons[i].click();
+                break;
+            }
+        }
+    }
+    </script>
+    """,
+    unsafe_allow_html=True,
+)
+
+# CSS responsivo: em telas finas, o preview fica acima das configurações
+st.markdown(
+    """
+    <style>
+    @media (max-width: 768px) {
+        .resume-layout { display: flex; flex-direction: column-reverse; gap: 1.5rem; }
+        .resume-layout > div { width: 100% !important; }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown('<div class="resume-layout">', unsafe_allow_html=True)
 col_left, col_right = st.columns([1.08, 0.92], gap="large")
 
 with col_left:
@@ -277,8 +364,21 @@ with col_left:
     # Aplica folha de estilo CSS do tema (Claro / Escuro) com a cor de destaque escolhida
     st.markdown(get_theme_css(active_theme, primary_color), unsafe_allow_html=True)
 
-    # Seção 2: Informações do Currículo
+    # Seção 2: Informações do Currículo (inclui dados pessoais do cabeçalho)
     st.subheader(txt["sec2_title"])
+
+    # Dados Pessoais do Cabeçalho (unidos da sessão anterior)
+    st.caption(txt.get("header_personal_caption", "Dados Pessoais do Cabeçalho (opcional — sobrescreve extração automática)"))
+    h1, h2 = st.columns(2)
+    with h1:
+        user_name = st.text_input(txt["name_label"], placeholder=txt["name_ph"])
+        user_role = st.text_input(txt["role_label"], placeholder=txt["role_ph"])
+        user_email = st.text_input(txt["email_label"], placeholder=txt["email_ph"])
+    with h2:
+        user_phone = st.text_input(txt["phone_label"], placeholder=txt["phone_ph"])
+        user_location = st.text_input(txt["loc_label"], placeholder=txt["loc_ph"])
+    st.divider()
+
     if "data_mode" not in st.session_state:
         st.session_state["data_mode"] = "manual"
     is_manual_mode = st.session_state["data_mode"] == "manual"
@@ -527,19 +627,6 @@ with col_left:
             "publications": structured_pubs if structured_pubs else man_pubs,
         }
 
-    # Seção 3: Dados Pessoais de Cabeçalho
-    st.subheader(txt["sec3_title"])
-    u1, u2 = st.columns(2)
-    with u1:
-        user_name = st.text_input(txt["name_label"], placeholder=txt["name_ph"])
-        user_role = st.text_input(txt["role_label"], placeholder=txt["role_ph"])
-        user_email = st.text_input(txt["email_label"], placeholder=txt["email_ph"])
-    with u2:
-        user_phone = st.text_input(txt["phone_label"], placeholder=txt["phone_ph"])
-        user_location = st.text_input(txt["loc_label"], placeholder=txt["loc_ph"])
-
-    generate_btn = st.button(txt["gen_btn"], type="primary", use_container_width=True)
-
 with col_right:
     # Preview Visual ao Vivo do Modelo LaTeX e das Cores Selecionadas
     st.subheader(txt["preview_card_title"])
@@ -551,7 +638,7 @@ with col_right:
         lang=resume_lang,
         has_photo=True,
     )
-    preview_label = "Pré-visualização visual do currículo" if ui_lang == "pt-br" else "Resume visual preview"
+    preview_label = "Pré-visualização visual do currículo" if resume_lang == "pt-br" else "Resume visual preview"
     preview_markup = f'<div role="region" aria-label="{preview_label}">{preview_html}</div>'
     if hasattr(st, "html"):
         st.html(preview_markup)
@@ -695,6 +782,8 @@ with col_right:
             })
     else:
         st.info(txt["idle_info"])
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 
 def main() -> None:

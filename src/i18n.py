@@ -289,6 +289,7 @@ UI_TEXT: Dict[str, Dict[str, Any]] = {
             "Otimizado com Plugins de Economia de Tokens (Caveman + TOON + 0-Reasoning)"
         ),
         "lang_selector_label": "🌐 Idioma da Interface e do Currículo / Language",
+        "resume_lang_label": "📝 Idioma do Currículo PDF / Resume Output Language",
         "sidebar_header": "⚙️ Motor de IA & Economia de Tokens",
         "model_select_label": "Modelo de IA",
         "model_select_help": (
@@ -327,6 +328,7 @@ UI_TEXT: Dict[str, Dict[str, Any]] = {
         "upload_tex_label": "Envie seu arquivo de template `.tex`",
         "paste_tex_label": "Ou cole o código LaTeX do seu modelo abaixo",
         "sec2_title": "2. Informações do Currículo",
+        "header_personal_caption": "Dados Pessoais do Cabeçalho (opcional — sobrescreve extração automática)",
         "data_mode_label": "Método de Entrada das Informações",
         "mode_import_label": "📥 Importar Dados",
         "mode_manual_label": "✍️ Inserir Manualmente",
@@ -476,6 +478,7 @@ UI_TEXT: Dict[str, Dict[str, Any]] = {
             "Optimized with Token-Saving Plugins (Caveman + TOON + 0-Reasoning)"
         ),
         "lang_selector_label": "🌐 Interface & Resume Language / Idioma",
+        "resume_lang_label": "📝 Resume Output Language / Idioma do Currículo PDF",
         "sidebar_header": "⚙️ AI Engine & Token Economy",
         "model_select_label": "AI Model",
         "model_select_help": (
@@ -514,6 +517,7 @@ UI_TEXT: Dict[str, Dict[str, Any]] = {
         "upload_tex_label": "Upload your `.tex` template file",
         "paste_tex_label": "Or paste your custom LaTeX template code below",
         "sec2_title": "2. Resume Information",
+        "header_personal_caption": "Personal Header Details (optional — overrides automatic extraction)",
         "data_mode_label": "Information Input Method",
         "mode_import_label": "📥 Import Data",
         "mode_manual_label": "✍️ Enter Manually",
