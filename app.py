@@ -387,6 +387,24 @@ with col_left:
     # Aplica folha de estilo CSS do tema (Claro / Escuro) com a cor de destaque escolhida
     st.markdown(get_theme_css(active_theme, primary_color), unsafe_allow_html=True)
 
+    # Preview Visual ao Vivo do Modelo LaTeX e das Cores Selecionadas (acima da Seção 2)
+    st.subheader(txt["preview_card_title"])
+    st.caption(txt["preview_card_caption"])
+    preview_html = render_template_preview_html(
+        template_id=selected_template_id,
+        primary_color=primary_color,
+        secondary_color=secondary_color,
+        lang=resume_lang,
+        has_photo=True,
+    )
+    preview_label = "Pré-visualização visual do currículo" if resume_lang == "pt-br" else "Resume visual preview"
+    preview_markup = f'<div role="region" aria-label="{preview_label}">{preview_html}</div>'
+    if hasattr(st, "html"):
+        st.html(preview_markup)
+    else:
+        st.markdown(preview_html, unsafe_allow_html=True)
+    st.divider()
+
     # Seção 2: Informações do Currículo (inclui dados pessoais do cabeçalho)
     st.subheader(txt["sec2_title"])
 
@@ -651,24 +669,6 @@ with col_left:
         }
 
 with col_right:
-    # Preview Visual ao Vivo do Modelo LaTeX e das Cores Selecionadas
-    st.subheader(txt["preview_card_title"])
-    st.caption(txt["preview_card_caption"])
-    preview_html = render_template_preview_html(
-        template_id=selected_template_id,
-        primary_color=primary_color,
-        secondary_color=secondary_color,
-        lang=resume_lang,
-        has_photo=True,
-    )
-    preview_label = "Pré-visualização visual do currículo" if resume_lang == "pt-br" else "Resume visual preview"
-    preview_markup = f'<div role="region" aria-label="{preview_label}">{preview_html}</div>'
-    if hasattr(st, "html"):
-        st.html(preview_markup)
-    else:
-        st.markdown(preview_html, unsafe_allow_html=True)
-
-    st.divider()
     st.subheader(txt["res_header"])
     if generate_btn:
         with st.spinner(txt["spinner_msg"]):
