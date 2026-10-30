@@ -2721,6 +2721,14 @@
             document.getElementById("ui-email-lbl").textContent = t.emailLbl;
             document.getElementById("ui-loc-lbl").textContent = t.locLbl;
             document.getElementById("ui-phone-lbl").textContent = t.phoneLbl;
+            document.getElementById("ui-gender-lbl").textContent = t.genderLbl;
+            const genderSelect = document.getElementById("inp-gender");
+            if (genderSelect) {
+                genderSelect.options[0].text = t.genderOptNone;
+                genderSelect.options[1].text = t.genderOptMale;
+                genderSelect.options[2].text = t.genderOptFemale;
+                genderSelect.options[3].text = t.genderOptOther;
+            }
             document.getElementById("ui-provider-lbl").textContent = t.providerLbl;
             document.getElementById("ui-model-lbl").textContent = t.modelLbl;
             document.getElementById("ui-api-key-lbl").textContent = t.apiKeyLbl;
@@ -3049,6 +3057,7 @@
             const nameVal = document.getElementById("inp-name").value.trim() || "Lucas Silva";
             const roleVal = document.getElementById("inp-role").value.trim() || (isEn ? "Senior AI & Software Architect" : "Arquiteto de Software & IA Sênior");
             const locVal = document.getElementById("inp-location").value.trim() || "São Paulo, BR";
+            const genderVal = document.getElementById("inp-gender")?.value || "";
             const portRaw = (state.dataMode === "manual"
                 ? (document.getElementById("inp-man-portfolio")?.value || document.getElementById("inp-portfolio")?.value || "")
                 : (document.getElementById("inp-portfolio")?.value || "")).trim();
@@ -3937,6 +3946,7 @@
                     email: document.getElementById("inp-email").value,
                     location: document.getElementById("inp-location").value,
                     phone: document.getElementById("inp-phone").value,
+                    gender: document.getElementById("inp-gender")?.value || "",
                     extra: document.getElementById("inp-extra").value,
                     provider: providerVal,
                     model: document.getElementById("inp-model").value,
