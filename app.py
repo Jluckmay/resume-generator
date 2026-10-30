@@ -418,6 +418,11 @@ with col_left:
     with h2:
         user_phone = st.text_input(txt["phone_label"], placeholder=txt["phone_ph"])
         user_location = st.text_input(txt["loc_label"], placeholder=txt["loc_ph"])
+        user_gender = st.selectbox(
+            txt["gender_label"],
+            options=txt["gender_options"],
+            index=0,
+        )
     st.divider()
 
     if "data_mode" not in st.session_state:
@@ -695,6 +700,7 @@ with col_right:
                     user_email=user_email,
                     user_phone=user_phone,
                     user_location=user_location,
+                    user_gender=user_gender,
                     extra_notes=extra_profile_text,
                     provider=selected_provider,
                     api_key=custom_api_key if custom_api_key.strip() else None,
