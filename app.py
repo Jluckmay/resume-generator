@@ -216,12 +216,18 @@ with st.sidebar:
         if review_only_cb:
             ai_mode = "review_only"
 
-# Cabeçalho da página
-head_col1, head_col2 = st.columns([0.1, 0.9], vertical_alignment="center")
-with head_col1:
-    if FAVICON_PATH.exists():
-        st.image(str(FAVICON_PATH), width=46)
-with head_col2:
+# Cabeçalho da página com ícone e título (ícone embutido para não ser cortado)
+if FAVICON_PATH.exists():
+    import base64 as _b64
+    _icon_b64 = _b64.b64encode(FAVICON_PATH.read_bytes()).decode("utf-8")
+    _icon_mime = "image/png" if FAVICON_PATH.suffix.lower() == ".png" else "image/x-icon"
+    st.markdown(
+        f'<img src="data:{_icon_mime};base64,{_icon_b64}" '
+        f'style="width:32px;height:32px;vertical-align:middle;margin-right:0.5rem;">'
+        f'<span style="font-size:1.75rem;font-weight:700;vertical-align:middle;">{txt["app_title"]}</span>',
+        unsafe_allow_html=True,
+    )
+else:
     st.title(txt["app_title"])
 st.caption(txt["app_caption"])
 
@@ -243,13 +249,30 @@ st.markdown(
     (function() {
         var btn = document.getElementById('fixed-generate-btn');
         if (!btn) return;
-        function check() {
+        function isSidebarCollapsed() {
+            // Streamlit renders a toggle button when sidebar is collapsed
             var collapsed = document.querySelector('[data-testid="collapsedControl"]');
-            var isCollapsed = collapsed && !collapsed.hidden && collapsed.offsetParent !== null;
-            btn.style.display = isCollapsed ? 'inline-flex' : 'none';
+            if (collapsed && collapsed.offsetParent !== null) return true;
+            // Also check if sidebar itself is hidden/collapsed via class
+            var sidebar = document.querySelector('[data-testid="stSidebar"]');
+            if (sidebar && sidebar.classList.contains('collapsed')) return true;
+            return false;
+        }
+        function check() {
+            btn.style.display = isSidebarCollapsed() ? 'inline-flex' : 'none';
         }
         check();
+        // Força a barra lateral a abrir no carregamento inicial da página
+        setTimeout(function() {
+            var collapsed = document.querySelector('[data-testid="collapsedControl"]');
+            if (collapsed && collapsed.offsetParent !== null) {
+                collapsed.click();
+            }
+        }, 800);
         setInterval(check, 400);
+        // Also react to DOM changes (sidebar toggle)
+        var observer = new MutationObserver(check);
+        observer.observe(document.body, { childList: true, subtree: true });
     })();
     function clickSidebarGenerate() {
         var buttons = document.querySelectorAll('button:not(.fixed-generate-btn)');
