@@ -288,8 +288,8 @@ UI_TEXT: Dict[str, Dict[str, Any]] = {
             "Extração automática de GitHub, ORCID, Lattes e LinkedIn • Compilação PDF via LaTeX • "
             "Otimizado com Plugins de Economia de Tokens (Caveman + TOON + 0-Reasoning)"
         ),
-        "lang_selector_label": "🌐 Idioma da Interface e do Currículo / Language",
-        "resume_lang_label": "📝 Idioma do Currículo PDF / Resume Output Language",
+        "lang_selector_label": "🌐 Idioma da Interface e do Currículo",
+        "resume_lang_label": "📝 Idioma do Currículo PDF",
         "sidebar_header": "⚙️ Motor de IA & Economia de Tokens",
         "model_select_label": "Modelo de IA",
         "model_select_help": (
@@ -477,8 +477,8 @@ UI_TEXT: Dict[str, Dict[str, Any]] = {
             "Automatic extraction from GitHub, ORCID, Lattes, LinkedIn & Portfolio • PDF compilation via LaTeX • "
             "Optimized with Token-Saving Plugins (Caveman + TOON + 0-Reasoning)"
         ),
-        "lang_selector_label": "🌐 Interface & Resume Language / Idioma",
-        "resume_lang_label": "📝 Resume Output Language / Idioma do Currículo PDF",
+        "lang_selector_label": "🌐 Interface & Resume Language",
+        "resume_lang_label": "📝 Resume Output Language",
         "sidebar_header": "⚙️ AI Engine & Token Economy",
         "model_select_label": "AI Model",
         "model_select_help": (
