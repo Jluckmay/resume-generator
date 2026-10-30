@@ -1414,6 +1414,15 @@
                         <label for="inp-phone" id="ui-phone-lbl">Telefone</label>
                         <input type="text" id="inp-phone" class="form-control" placeholder="+55 (11) 99999-9999" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" spellcheck="false" aria-label="Telefone">
                     </div>
+                    <div class="form-group">
+                        <label for="inp-gender" id="ui-gender-lbl">Gênero</label>
+                        <select id="inp-gender" class="form-control" oninput="renderLivePreview()" aria-label="Gênero">
+                            <option value="">Preferir não informar</option>
+                            <option value="masculino">Masculino</option>
+                            <option value="feminino">Feminino</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Seletor do Modo de Entrada -->
@@ -1917,6 +1926,11 @@
                 emailLbl: "E-mail",
                 locLbl: "Cidade / UF / País",
                 phoneLbl: "Telefone",
+                genderLbl: "Gênero",
+                genderOptNone: "Preferir não informar",
+                genderOptMale: "Masculino",
+                genderOptFemale: "Feminino",
+                genderOptOther: "Outro",
                 providerLbl: "Provedor de IA",
                 modelLbl: "Modelo de IA",
                 apiKeyLbl: "Chave de API do Provedor (Opcional)",
@@ -2025,6 +2039,11 @@
                 emailLbl: "E-mail",
                 locLbl: "City / State / Country",
                 phoneLbl: "Phone",
+                genderLbl: "Gender",
+                genderOptNone: "Prefer not to say",
+                genderOptMale: "Male",
+                genderOptFemale: "Female",
+                genderOptOther: "Other",
                 providerLbl: "AI Provider",
                 modelLbl: "AI Model",
                 apiKeyLbl: "Provider API Key (Optional)",
