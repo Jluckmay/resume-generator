@@ -502,6 +502,13 @@
                 grid-template-columns: minmax(0, 1fr);
                 gap: 1.25rem;
             }
+            /* Preview above configuration on narrow screens */
+            .preview-section {
+                order: 1;
+            }
+            .config-section {
+                order: 2;
+            }
         }
         .card {
             background-color: var(--bg-card);
@@ -1252,7 +1259,7 @@
     <main class="container" id="main-content">
         <div id="ui-screenreader-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
         <!-- Left Column: Intuitive Step-by-Step Configuration -->
-        <section aria-labelledby="ui-step1-title">
+        <section aria-labelledby="ui-step1-title" class="config-section">
             <!-- Step 1: Modalidade & Modelo LaTeX -->
             <div class="card">
                 <div class="card-header">
@@ -1612,7 +1619,7 @@
         </section>
 
         <!-- Right Column: Real-Time Template Preview & Generated PDF Output -->
-        <section aria-labelledby="ui-preview-title">
+        <section aria-labelledby="ui-preview-title" class="preview-section">
             <!-- Live Template & Color Preview Card -->
             <div class="card">
                 <div class="card-header">
