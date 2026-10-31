@@ -216,19 +216,8 @@ with st.sidebar:
         if review_only_cb:
             ai_mode = "review_only"
 
-# Cabeçalho da página: título acima da descrição (ícone embutido para não ser cortado)
-if FAVICON_PATH.exists():
-    import base64 as _b64
-    _icon_b64 = _b64.b64encode(FAVICON_PATH.read_bytes()).decode("utf-8")
-    _icon_mime = "image/png" if FAVICON_PATH.suffix.lower() == ".png" else "image/x-icon"
-    st.markdown(
-        f'<img src="data:{_icon_mime};base64,{_icon_b64}" '
-        f'style="width:32px;height:32px;vertical-align:middle;margin-right:0.5rem;">'
-        f'<span style="font-size:1.75rem;font-weight:700;vertical-align:middle;">{txt["app_title"]}</span>',
-        unsafe_allow_html=True,
-    )
-else:
-    st.title(txt["app_title"])
+# Título da página (acima da descrição)
+st.title(txt["app_title"])
 st.caption(txt["app_caption"])
 
 # Botão de gerar currículo: fixado no canto superior esquerdo, próximo ao
@@ -251,10 +240,11 @@ st.markdown(
         if (!btn) return;
         function isSidebarCollapsed() {
             var collapsed = document.querySelector('[data-testid="collapsedControl"]');
-            if (collapsed && collapsed.offsetParent !== null) return true;
-            var sidebar = document.querySelector('[data-testid="stSidebar"]');
-            if (sidebar && sidebar.classList.contains('collapsed')) return true;
-            return false;
+            if (!collapsed) return false;
+            var style = window.getComputedStyle(collapsed);
+            if (style.display === 'none' || style.visibility === 'hidden') return false;
+            var rect = collapsed.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0;
         }
         function positionBtn() {
             var collapsed = document.querySelector('[data-testid="collapsedControl"]');
