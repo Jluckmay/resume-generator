@@ -117,7 +117,7 @@ with st.sidebar:
         st.error(txt["latex_missing_lbl"])
 
     st.divider()
-    generate_btn = st.button(
+    sidebar_generate_btn = st.button(
         txt["gen_btn"],
         type="primary",
         use_container_width=True,
@@ -217,70 +217,52 @@ with st.sidebar:
             ai_mode = "review_only"
 
 # Título da página (acima da descrição)
-st.title(txt["app_title"])
-st.caption(txt["app_caption"])
-
-# Botão de gerar currículo: fixado no canto superior esquerdo, próximo ao
-# ícone de mostrar a barra lateral, somente quando a barra lateral está fechada.
 st.markdown(
     """
     <style>
-    .fixed-generate-btn {
-        position: fixed;
-        top: 1rem;
-        left: 3.5rem;
-        z-index: 9999;
+    .stApp [data-testid="stAppViewBlockContainer"].block-container {
+        padding-top: 5rem !important;
+    }
+    body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    .stApp [data-testid="stAppViewBlockContainer"].block-container {
+        padding-top: 9rem !important;
+    }
+    div[data-testid="element-container"]:has(#fixed-generate-btn-anchor) + div[data-testid="element-container"] {
+        position: fixed !important;
+        top: 4.5rem !important;
+        left: 0.25rem !important;
+        z-index: 9999 !important;
+        display: none;
+        width: auto !important;
+        padding: 0 !important;
+    }
+    body:has(section[data-testid="stSidebar"][aria-expanded="false"])
+    div[data-testid="element-container"]:has(#fixed-generate-btn-anchor) + div[data-testid="element-container"] {
+        display: block;
+    }
+    div[data-testid="element-container"]:has(#fixed-generate-btn-anchor) {
         display: none;
     }
-    </style>
-    <button class="fixed-generate-btn" id="fixed-generate-btn" onclick="clickSidebarGenerate()">🚀 """ + txt["gen_btn"] + """</button>
-    <script>
-    (function() {
-        var btn = document.getElementById('fixed-generate-btn');
-        if (!btn) return;
-        function isSidebarCollapsed() {
-            var collapsed = document.querySelector('[data-testid="collapsedControl"]');
-            if (!collapsed) return false;
-            var style = window.getComputedStyle(collapsed);
-            if (style.display === 'none' || style.visibility === 'hidden') return false;
-            var rect = collapsed.getBoundingClientRect();
-            return rect.width > 0 && rect.height > 0;
-        }
-        function positionBtn() {
-            var collapsed = document.querySelector('[data-testid="collapsedControl"]');
-            if (collapsed) {
-                var rect = collapsed.getBoundingClientRect();
-                btn.style.left = (rect.right + 8) + 'px';
-                btn.style.top = rect.top + 'px';
-            }
-        }
-        function check() {
-            if (isSidebarCollapsed()) {
-                positionBtn();
-                btn.style.display = 'inline-flex';
-            } else {
-                btn.style.display = 'none';
-            }
-        }
-        check();
-        setInterval(check, 400);
-        var observer = new MutationObserver(check);
-        observer.observe(document.body, { childList: true, subtree: true });
-    })();
-    function clickSidebarGenerate() {
-        var buttons = document.querySelectorAll('button:not(.fixed-generate-btn)');
-        for (var i = 0; i < buttons.length; i++) {
-            var t = buttons[i].textContent || '';
-            if (t.includes('Gerar Currículo') || t.includes('Generate Resume')) {
-                buttons[i].click();
-                break;
-            }
-        }
+    div[data-testid="element-container"]:has(#fixed-generate-btn-anchor) + div[data-testid="element-container"] [data-testid="stButton"] {
+        width: auto !important;
     }
-    </script>
+    div[data-testid="element-container"]:has(#fixed-generate-btn-anchor) + div[data-testid="element-container"] button {
+        width: auto !important;
+        white-space: nowrap;
+    }
+    </style>
+    <span id="fixed-generate-btn-anchor"></span>
     """,
     unsafe_allow_html=True,
 )
+fixed_generate_btn = st.button(
+    txt["gen_btn"],
+    type="primary",
+    key="fixed_generate_btn",
+)
+generate_btn = sidebar_generate_btn or fixed_generate_btn
+st.title(txt["app_title"])
+st.caption(txt["app_caption"])
 
 # CSS responsivo: em telas finas, o preview fica acima das configurações
 st.markdown(
