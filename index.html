@@ -2518,6 +2518,66 @@
             // O usuário adiciona itens sob demanda através dos botões de adicionar.
         }
 
+        function populateManualEditor(cv) {
+            if (!cv || typeof cv !== "object") return;
+
+            const setValue = (id, value) => {
+                const field = document.getElementById(id);
+                if (field && value != null) {
+                    field.value = Array.isArray(value) ? value.join("\n") : String(value);
+                }
+            };
+            const listValues = key => Array.isArray(cv[key]) ? cv[key] : [];
+            const replaceCards = (id, items, addCard) => {
+                const list = document.getElementById(id);
+                if (!list) return;
+                list.replaceChildren();
+                items.forEach(item => addCard(item));
+            };
+
+            setValue("inp-name", cv.name);
+            setValue("inp-role", cv.title);
+            setValue("inp-email", cv.email);
+            setValue("inp-phone", cv.phone);
+            setValue("inp-location", cv.location);
+            setValue("inp-man-summary", cv.summary);
+            setValue("inp-man-skills", listValues("skills").map(skill =>
+                typeof skill === "string"
+                    ? skill
+                    : `${skill.category || "Habilidades"}: ${skill.items || ""}`
+            ).join("\n"));
+            setValue("inp-man-languages", listValues("languages").join(", "));
+
+            replaceCards("list-struct-education", listValues("education"), addStructuredEducation);
+            replaceCards("list-struct-experience", listValues("experience"), item => addStructuredExperience({
+                ...item,
+                description: item.description || (Array.isArray(item.bullets) ? item.bullets.join("\n") : ""),
+            }));
+            replaceCards("list-struct-projects", listValues("projects"), addStructuredProject);
+            replaceCards("list-struct-publications", listValues("publications"), addStructuredPublication);
+            replaceCards("list-struct-awards", listValues("awards"), award =>
+                addStructuredAward(typeof award === "string" ? { title: award } : award)
+            );
+
+            ["education", "experience", "projects", "awards", "publications"].forEach(section => {
+                setValue(`inp-man-${section}`, "");
+            });
+
+            [
+                ["inp-github", "inp-man-github"],
+                ["inp-scholar", "inp-man-scholar"],
+                ["inp-orcid", "inp-man-orcid"],
+                ["inp-linkedin", "inp-man-linkedin"],
+                ["inp-lattes", "inp-man-lattes"],
+                ["inp-portfolio", "inp-man-portfolio"],
+            ].forEach(([sourceId, targetId]) => {
+                setValue(targetId, document.getElementById(sourceId)?.value || "");
+            });
+
+            setDataMode("manual");
+            renderLivePreview();
+        }
+
         function initAutoPreferences() {
             // 0. Higienização de segurança do localStorage: se existir qualquer URL de backend de produção gravada em texto plano, limpa imediatamente
             try {
@@ -4061,6 +4121,10 @@
 
                 if (!resp.ok || data.error) {
                     throw new Error(data.error || `HTTP ${resp.status}: Falha ao gerar currículo`);
+                }
+
+                if (data.structured_cv) {
+                    populateManualEditor(data.structured_cv);
                 }
 
                 const hasPdf = data.success !== false && Boolean(data.pdf_base64);

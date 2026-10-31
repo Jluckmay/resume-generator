@@ -331,6 +331,7 @@ class LLMResumeGenerator:
         Economiza até ~75% dos tokens comparado com síntese direta a partir de páginas web brutas.
         Envia apenas o corpo do documento (\\begin{document} .. \\end{document}) com split de preâmbulo.
         """
+        p = self.use_token_plugins
         metrics = TokenMetrics(
             active_plugins=[
                 plugin for plugin, enabled in [
@@ -341,7 +342,6 @@ class LLMResumeGenerator:
                 ] if enabled
             ]
         )
-        p = self.use_token_plugins
         preamble, body, _ = LaTeXPreambleSplitPlugin.split_template(base_latex) if p.get("preamble", True) else ("", base_latex, [])
         target = body if preamble else base_latex
         preamble_tokens_saved = estimate_tokens(preamble) * 2 if preamble else 0

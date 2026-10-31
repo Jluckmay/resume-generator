@@ -9,7 +9,58 @@ from src.direct_builder import (
     build_structured_cv_deterministically,
     parse_manual_resume_inputs,
 )
+from src.manual_editor import manual_editor_state_from_cv
 from src.pipeline import build_resume_pipeline
+
+
+def test_generated_cv_populates_editable_manual_fields():
+    """Garante que os dados estruturados gerados apareçam nos campos manuais."""
+    cv = {
+        "name": "Ana Clara Santos",
+        "title": "Engenheira de Machine Learning",
+        "email": "ana@example.com",
+        "phone": "+55 11 99999-9999",
+        "location": "Campinas, SP",
+        "summary": "Especialista em modelos de linguagem.",
+        "education": [
+            {"degree": "Mestrado", "institution": "UNICAMP", "period": "2022 - 2024", "details": "IA"},
+            {"degree": "Graduação", "institution": "USP", "period": "2018 - 2022", "details": ""},
+        ],
+        "experience": [
+            {
+                "role": "Engenheira",
+                "organization": "Tech Corp",
+                "period": "2022 - Atual",
+                "location": "Remoto",
+                "bullets": ["Desenvolvimento de modelos.", "Liderança técnica."],
+            }
+        ],
+        "skills": [{"category": "IA", "items": "Python, PyTorch"}],
+        "projects": [{"name": "Resume AI", "tech": "Python", "url": "https://example.com", "description": "Automação."}],
+        "languages": ["Português (Nativo)", "Inglês (Fluente)"],
+        "publications": [{"title": "Artigo", "venue": "IEEE", "year": "2024", "authors": "Santos", "doi": "10.1/abc"}],
+        "awards": ["Prêmio de Inovação (2023)"],
+    }
+
+    values = manual_editor_state_from_cv(
+        cv,
+        {"links": {"github": "https://github.com/anaclara", "portfolio": "https://anaclara.dev"}},
+    )
+
+    assert values["manual_user_name"] == "Ana Clara Santos"
+    assert values["manual_user_role"] == "Engenheira de Machine Learning"
+    assert values["manual_user_email"] == "ana@example.com"
+    assert values["man_summary"] == "Especialista em modelos de linguagem."
+    assert values["man_edu_count"] == 2
+    assert values["edu_inst_1"] == "USP"
+    assert values["man_exp_count"] == 1
+    assert values["exp_desc_0"] == "Desenvolvimento de modelos.\nLiderança técnica."
+    assert values["man_skills"] == "IA: Python, PyTorch"
+    assert values["man_languages"] == "Português (Nativo), Inglês (Fluente)"
+    assert values["proj_url_0"] == "https://example.com"
+    assert values["pub_doi_0"] == "10.1/abc"
+    assert values["award_title_0"] == "Prêmio de Inovação (2023)"
+    assert values["man_gh"] == "https://github.com/anaclara"
 
 
 def test_parse_manual_resume_inputs_with_structured_dicts():
@@ -243,6 +294,8 @@ def test_ui_elements_for_manual_and_import_mode():
     assert 'id="inp-man-publications"' in html
     assert 'function setDataMode(mode)' in html
     assert 'data_source_mode: state.dataMode' in html
+    assert 'function populateManualEditor(cv)' in html
+    assert 'populateManualEditor(data.structured_cv)' in html
 
     app_py = Path("app.py").read_text(encoding="utf-8")
     assert 'st.session_state["data_mode"] = "manual"' in app_py
@@ -258,6 +311,9 @@ def test_ui_elements_for_manual_and_import_mode():
     assert 'man_skills = st.text_area' in app_py
     assert 'man_proj = st.text_area' in app_py
     assert 'data_source_mode="manual" if is_manual_mode else "import"' in app_py
+    assert 'st.session_state["pending_manual_editor"]' in app_py
+    assert 'manual_editor_state_from_cv(' in app_py
+    assert 'st.session_state["data_mode"] = "manual"' in app_py
 
 
 def test_server_rate_limiter_allows_multiple_generations_and_exempts_local_dev():
@@ -356,4 +412,3 @@ def test_sanitize_awards_with_structured_dictionaries():
     assert clean[1] == "Melhor Artigo em IA Aplicada (2023) - Conferência Brasileira de IA"
     assert clean[2] == "Prêmio Mérito Acadêmico - USP (2022)"
     assert clean[3] == "1º Lugar Hackathon - Tech Challenge"
-
