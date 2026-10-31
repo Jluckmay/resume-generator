@@ -231,15 +231,21 @@ else:
     st.title(txt["app_title"])
 st.caption(txt["app_caption"])
 
-# Botão de gerar currículo: aparece na barra lateral quando aberta,
-# fixado no canto superior esquerdo quando a barra lateral está oculta.
+# Título da página
+st.markdown(
+    f'<h1 style="margin:0.5rem 0 1rem 0;font-size:2rem;font-weight:700;">{txt["app_title"]}</h1>',
+    unsafe_allow_html=True,
+)
+
+# Botão de gerar currículo: aparece ao lado do ícone de mostrar a barra lateral,
+# somente quando a barra lateral está fechada.
 st.markdown(
     """
     <style>
     .fixed-generate-btn {
         position: fixed;
         top: 1rem;
-        left: 1rem;
+        left: 3.5rem;
         z-index: 9999;
         display: none;
     }
@@ -250,27 +256,30 @@ st.markdown(
         var btn = document.getElementById('fixed-generate-btn');
         if (!btn) return;
         function isSidebarCollapsed() {
-            // Streamlit renders a toggle button when sidebar is collapsed
             var collapsed = document.querySelector('[data-testid="collapsedControl"]');
             if (collapsed && collapsed.offsetParent !== null) return true;
-            // Also check if sidebar itself is hidden/collapsed via class
             var sidebar = document.querySelector('[data-testid="stSidebar"]');
             if (sidebar && sidebar.classList.contains('collapsed')) return true;
             return false;
         }
+        function positionBtn() {
+            var collapsed = document.querySelector('[data-testid="collapsedControl"]');
+            if (collapsed) {
+                var rect = collapsed.getBoundingClientRect();
+                btn.style.left = (rect.right + 8) + 'px';
+                btn.style.top = rect.top + 'px';
+            }
+        }
         function check() {
-            btn.style.display = isSidebarCollapsed() ? 'inline-flex' : 'none';
+            if (isSidebarCollapsed()) {
+                positionBtn();
+                btn.style.display = 'inline-flex';
+            } else {
+                btn.style.display = 'none';
+            }
         }
         check();
-        // Força a barra lateral a abrir no carregamento inicial da página
-        setTimeout(function() {
-            var collapsed = document.querySelector('[data-testid="collapsedControl"]');
-            if (collapsed && collapsed.offsetParent !== null) {
-                collapsed.click();
-            }
-        }, 800);
         setInterval(check, 400);
-        // Also react to DOM changes (sidebar toggle)
         var observer = new MutationObserver(check);
         observer.observe(document.body, { childList: true, subtree: true });
     })();
