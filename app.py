@@ -216,7 +216,7 @@ with st.sidebar:
         if review_only_cb:
             ai_mode = "review_only"
 
-# Cabeçalho da página com ícone e título (ícone embutido para não ser cortado)
+# Cabeçalho da página: título acima da descrição (ícone embutido para não ser cortado)
 if FAVICON_PATH.exists():
     import base64 as _b64
     _icon_b64 = _b64.b64encode(FAVICON_PATH.read_bytes()).decode("utf-8")
@@ -231,14 +231,8 @@ else:
     st.title(txt["app_title"])
 st.caption(txt["app_caption"])
 
-# Título da página
-st.markdown(
-    f'<h1 style="margin:0.5rem 0 1rem 0;font-size:2rem;font-weight:700;">{txt["app_title"]}</h1>',
-    unsafe_allow_html=True,
-)
-
-# Botão de gerar currículo: aparece ao lado do ícone de mostrar a barra lateral,
-# somente quando a barra lateral está fechada.
+# Botão de gerar currículo: fixado no canto superior esquerdo, próximo ao
+# ícone de mostrar a barra lateral, somente quando a barra lateral está fechada.
 st.markdown(
     """
     <style>

@@ -1472,6 +1472,10 @@ def _allocate_single_page_budget(
         )
         has_primary_secondary = total_pubs > 0 if is_academic else total_proj > 0
         allow_fallback = not has_primary_secondary or core_remaining
+        # Currículos profissionais sem experiência: permite publicações como
+        # seção de fallback mesmo quando há projetos alocados.
+        if not is_academic and n_exp == 0:
+            allow_fallback = True
 
     if allow_fallback:
         while add_item(fallback_kind):
@@ -1549,6 +1553,10 @@ def _single_page_fallback_needed(
         cost = (header_exp + total_exp * weight_exp if total_exp else 0.0)
         cost += header_proj + total_proj * weight_proj if total_proj else 0.0
     has_primary_secondary = total_pubs > 0 if resume_type in ("academico", "academic") else total_proj > 0
+    # Currículos profissionais sem experiência: permite publicações como
+    # seção de fallback mesmo quando há projetos alocados.
+    if resume_type not in ("academico", "academic") and total_exp == 0:
+        return True
     return not has_primary_secondary or cost > budget
 
 
@@ -4248,12 +4256,12 @@ def _render_bubble(
         side_items.append(rf"\bubblesideitem{{\faEnvelope}}{{\href{{{escape_url('mailto:' + clean_em)}}}{{{escape_latex(clean_em)}}}}}")
     if cv.get("phone"):
         side_items.append(rf"\bubblesideitem{{\faPhone}}{{{escape_latex(cv['phone'])}}}")
-    if cv.get("location"):
-        maps_url = "https://www.google.com/maps/search/?api=1&query=" + urllib.parse.quote_plus(cv["location"].strip())
-        side_items.append(rf"\bubblesideitem{{\faMapMarker*}}{{\href{{{escape_url(maps_url)}}}{{{escape_latex(cv['location'])}}}}}")
     if links.get("portfolio"):
         port_disp = escape_latex(simplify_url_display(links["portfolio"]))
         side_items.append(rf"\bubblesideitem{{\faGlobe}}{{\href{{{escape_url(links['portfolio'])}}}{{\textbf{{{port_disp}}}}}}}")
+    if cv.get("location"):
+        maps_url = "https://www.google.com/maps/search/?api=1&query=" + urllib.parse.quote_plus(cv["location"].strip())
+        side_items.append(rf"\bubblesideitem{{\faMapMarker*}}{{\href{{{escape_url(maps_url)}}}{{{escape_latex(cv['location'])}}}}}")
     if links.get("linkedin"):
         li_disp = escape_latex(_get_platform_display(links, "linkedin", candidate_name=raw_name))
         side_items.append(rf"\bubblesideitem{{\faLinkedin}}{{\href{{{escape_url(links['linkedin'])}}}{{\textbf{{{li_disp}}}}}}}")
