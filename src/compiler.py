@@ -25,8 +25,8 @@ _FORBIDDEN_LATEX_PATTERNS = (
     r"\\openin\b",
     r"\\openout\b",
     r"\\read\b",
-    r"\\input\s*\{\s*(/|\\|\.\.)",
-    r"\\include\s*\{\s*(/|\\|\.\.)",
+    r"\\input\s*\{[^}]*(?:/|\\\\|\.\./|\.\.\\)",  # Bloqueia path traversal em \\input
+    r"\\include\s*\{[^}]*(?:/|\\\\|\.\./|\.\.\\)",  # Bloqueia path traversal em \\include
     r"\\verbatiminput\b",
     r"\\lstinputlisting\b",
     r"\\import\s*\{",
@@ -513,7 +513,7 @@ def compile_latex_to_pdf(
     Retorna: (sucesso, caminho_pdf, caminho_tex, log_resumido)
     """
     latex_code = sanitize_latex_for_pdflatex(latex_code)
-    sanitize_custom_latex(latex_code)
+    latex_code = sanitize_custom_latex(latex_code)
     latex_code = sanitize_latex_layout(latex_code)
 
     target_dir = (build_dir or OUTPUT_DIR).resolve()

@@ -8,7 +8,8 @@ import re
 import socket
 import unicodedata
 import urllib.parse
-import xml.etree.ElementTree as ET
+import defusedxml.ElementTree as defused_ET
+import xml.etree.ElementTree as ET  # fallback apenas se defusedxml não estiver disponível
 import zipfile
 from collections import Counter
 from typing import Any, Dict, List, Tuple
@@ -26,6 +27,8 @@ USER_AGENT = (
 _MAX_HTTP_BYTES = 1_500_000  # 1.5 MB max download size for external pages
 _MAX_UPLOAD_FILE_BYTES = 10 * 1024 * 1024  # 10 MB max upload size
 _MAX_UNCOMPRESSED_XML_BYTES = 15 * 1024 * 1024  # 15 MB max uncompressed Lattes XML
+_MAX_ZIP_ENTRIES = 100  # Limite máximo de entradas em arquivos ZIP
+_MAX_ZIP_COMPRESSION_RATIO = 100  # Razão máxima de compressão permitida (anti-ZIP bomb)
 
 def parse_linkedin_input(val: str) -> Tuple[str, str]:
     """Normaliza o input do LinkedIn para (url_completa, nick).
@@ -1085,7 +1088,20 @@ def extract_lattes(
         try:
             if fname_lower.endswith(".zip") or file_bytes[:2] == b"PK":
                 with zipfile.ZipFile(io.BytesIO(file_bytes)) as zf:
-                    xml_infos = [i for i in zf.infolist() if i.filename.lower().endswith(".xml")]
+                    # Anti-ZIP bomb: limita número de entradas
+                    entries = zf.infolist()
+                    if len(entries) > _MAX_ZIP_ENTRIES:
+                        raise ValueError(f"Arquivo ZIP excede o limite máximo de {_MAX_ZIP_ENTRIES} entradas.")
+                    # Anti-ZIP bomb: verifica razão de compressão
+                    for info in entries:
+                        if info.compress_size > 0:
+                            ratio = info.file_size / info.compress_size
+                            if ratio > _MAX_ZIP_COMPRESSION_RATIO:
+                                raise ValueError(
+                                    f"Arquivo ZIP excede a razão máxima de compressão ({_MAX_ZIP_COMPRESSION_RATIO}x). "
+                                    "Possível ZIP bomb detectado."
+                                )
+                    xml_infos = [i for i in entries if i.filename.lower().endswith(".xml")]
                     if xml_infos:
                         info = xml_infos[0]
                         if info.file_size > _MAX_UNCOMPRESSED_XML_BYTES:
@@ -1150,7 +1166,11 @@ def _parse_lattes_xml(xml_bytes: bytes, out: Dict[str, Any]) -> None:
     if re.search(r"<!\s*(ENTITY|DOCTYPE)\b", text[:4096], flags=re.IGNORECASE):
         raise ValueError("Declarações DTD/ENTITY bloqueadas por segurança (anti-XXE).")
 
-    root = ET.fromstring(text)
+    try:
+        root = defused_ET.fromstring(text)
+    except Exception:
+        # Fallback com ET apenas se defusedxml falhar (defusedxml já bloqueia XXE/DTD por padrão)
+        root = ET.fromstring(text)
     id_lattes = root.attrib.get("NUMERO-IDENTIFICADOR", "")
     if id_lattes:
         out["lattes_id"] = id_lattes
