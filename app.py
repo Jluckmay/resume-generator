@@ -17,6 +17,7 @@ from src.config import (
     RECOMMENDED_MODELS,
 )
 from src.i18n import MODELS_I18N, TEMPLATES_I18N, UI_TEXT, normalize_lang
+from src.manual_editor import manual_editor_state_from_cv
 from src.pipeline import build_resume_pipeline
 from src.templates import BUILTIN_TEMPLATES
 from src.ui_theme import (
@@ -40,6 +41,18 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+pending_manual_editor = st.session_state.pop("pending_manual_editor", None)
+if isinstance(pending_manual_editor, dict):
+    structured_cv = pending_manual_editor.get("structured_cv")
+    if isinstance(structured_cv, dict):
+        st.session_state.update(
+            manual_editor_state_from_cv(
+                structured_cv,
+                pending_manual_editor.get("extracted_sources"),
+            )
+        )
+        st.session_state["data_mode"] = "manual"
 
 # 1. Detecção automática de idioma e tema padrão do usuário (Navegador / Sistema Operacional)
 headers_dict = {}
@@ -387,12 +400,12 @@ with col_left:
     st.caption(txt.get("header_personal_caption", "Dados Pessoais do Cabeçalho (opcional — sobrescreve extração automática)"))
     h1, h2 = st.columns(2)
     with h1:
-        user_name = st.text_input(txt["name_label"], placeholder=txt["name_ph"])
-        user_role = st.text_input(txt["role_label"], placeholder=txt["role_ph"])
-        user_email = st.text_input(txt["email_label"], placeholder=txt["email_ph"])
+        user_name = st.text_input(txt["name_label"], key="manual_user_name", placeholder=txt["name_ph"])
+        user_role = st.text_input(txt["role_label"], key="manual_user_role", placeholder=txt["role_ph"])
+        user_email = st.text_input(txt["email_label"], key="manual_user_email", placeholder=txt["email_ph"])
     with h2:
-        user_phone = st.text_input(txt["phone_label"], placeholder=txt["phone_ph"])
-        user_location = st.text_input(txt["loc_label"], placeholder=txt["loc_ph"])
+        user_phone = st.text_input(txt["phone_label"], key="manual_user_phone", placeholder=txt["phone_ph"])
+        user_location = st.text_input(txt["loc_label"], key="manual_user_location", placeholder=txt["loc_ph"])
         user_gender = st.selectbox(
             txt["gender_label"],
             options=txt["gender_options"],
@@ -442,6 +455,7 @@ with col_left:
     else:
         man_summary = st.text_area(
             txt["manual_summary_label"],
+            key="man_summary",
             height=80,
             placeholder=txt["manual_summary_ph"],
         )
@@ -449,12 +463,14 @@ with col_left:
         with sk_col1:
             man_skills = st.text_area(
                 txt["manual_skills_label"],
+                key="man_skills",
                 height=80,
                 placeholder=txt["manual_skills_ph"],
             )
         with sk_col2:
             man_languages = st.text_input(
                 txt["manual_languages_label"],
+                key="man_languages",
                 placeholder=txt["manual_languages_ph"],
             )
 
@@ -706,6 +722,14 @@ with col_right:
                 st.session_state["session_structured_cv"] = res.structured_cv
                 st.session_state["session_compiler_message"] = res.compiler_message
                 st.session_state["session_tex_name"] = f"resume_{resume_lang}_{resume_type}_{selected_template_id}.tex"
+
+                if not is_manual_mode:
+                    st.session_state["pending_manual_editor"] = {
+                        "structured_cv": res.structured_cv,
+                        "extracted_sources": res.extracted_sources,
+                    }
+                    st.session_state["data_mode"] = "manual"
+                    st.rerun()
 
                 if res.success and res.pdf_path and res.pdf_path.exists():
                     st.session_state["session_pdf_bytes"] = res.pdf_path.read_bytes()
