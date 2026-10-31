@@ -112,6 +112,12 @@ def test_ui_theme_responsive_css():
     assert "min-height: 44px" in css
     assert ".stApp :focus-visible" in css
     assert "outline-offset: 3px" in css
+    assert "#D7192D" in css
+    assert "#FACC15" in css
+
+    dark_css = get_theme_css("dark", "#0F4C81")
+    assert "#080808" in dark_css
+    assert "#EDEDED" in dark_css
 
 
 def test_streamlit_preview_has_accessible_region_label():
@@ -438,4 +444,3 @@ def test_pdf_viewer_continuous_scroll_and_wheel_page_switching():
 
     # app.py: parâmetros para visualizador nativo permitir scroll contínuo entre páginas
     assert "#toolbar=1&navpanes=0&scrollbar=1&page=1&view=FitH" in app_py
-

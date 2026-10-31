@@ -105,30 +105,31 @@
             text-security: none !important;
         }
         :root[data-theme="light"] {
-            --bg-body: #f8fafc;
+            --bg-body: #f2f1ee;
             --bg-card: #ffffff;
-            --bg-subtle: #f1f5f9;
+            --bg-subtle: #f7f6f3;
             --bg-input: #ffffff;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
-            --accent: #18181B;
-            --accent-sec: #3F3F46;
-            --accent-rgb: 24, 24, 27;
+            --text-main: #191919;
+            --text-muted: #686868;
+            --border: #dedbd6;
+            --shadow: 0 10px 28px rgba(15, 15, 15, 0.07);
+            --accent: #d7192d;
+            --accent-sec: #facc15;
+            --accent-rgb: 215, 25, 45;
         }
         :root[data-theme="dark"] {
-            --bg-body: #0b0f19;
-            --bg-card: #111827;
-            --bg-subtle: #1e293b;
-            --bg-input: #0f172a;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #1e293b;
-            --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-            --accent: #38bdf8;
-            --accent-sec: #cbd5e1;
-            --accent-rgb: 56, 189, 248;
+            color-scheme: dark;
+            --bg-body: #080808;
+            --bg-card: #101010;
+            --bg-subtle: #171717;
+            --bg-input: #121212;
+            --text-main: #ededed;
+            --text-muted: #a3a3a3;
+            --border: #292929;
+            --shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+            --accent: #e11d2e;
+            --accent-sec: #ffd21f;
+            --accent-rgb: 225, 29, 46;
         }
         * {
             box-sizing: border-box;
@@ -1158,6 +1159,110 @@
                 padding: 0.5rem 0.8rem;
                 font-size: 0.85rem;
             }
+        }
+        :root[data-theme="light"] {
+            color-scheme: light;
+        }
+        body {
+            background-image: radial-gradient(ellipse at 88% 0, rgba(var(--accent-rgb), 0.055), transparent 34rem);
+        }
+        ::selection {
+            color: #111;
+            background: var(--accent-sec);
+        }
+        .sidebar {
+            border-top: 2px solid var(--accent);
+        }
+        .brand-logo {
+            box-shadow: 0 5px 18px rgba(var(--accent-rgb), 0.2);
+        }
+        .brand-title {
+            letter-spacing: -0.035em;
+        }
+        .brand-subtitle,
+        .sidebar-section-title,
+        .metric-label {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        }
+        .sidebar-section-title {
+            color: var(--accent);
+            letter-spacing: 0.08em;
+        }
+        .card {
+            border-top: 2px solid var(--accent);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+        .card-header {
+            border-bottom-color: var(--border);
+        }
+        .step-num {
+            background-color: var(--accent-sec);
+            color: #111;
+            border-radius: 4px;
+        }
+        .btn-primary,
+        .sidebar-reopen,
+        .sidebar-generate-float {
+            background: linear-gradient(110deg, var(--accent), #a90f20);
+            border-radius: 6px;
+            box-shadow: 0 5px 16px rgba(var(--accent-rgb), 0.22);
+        }
+        .btn-primary:hover,
+        .sidebar-reopen:hover,
+        .sidebar-generate-float:hover {
+            filter: brightness(1.12);
+            transform: translateY(-1px);
+        }
+        .btn-toggle,
+        .btn-secondary,
+        .tpl-option,
+        .modal-box,
+        .struct-section,
+        details.collapsible {
+            border-radius: 6px;
+        }
+        .btn-toggle:hover,
+        .btn-secondary:hover,
+        .tpl-option:hover {
+            border-color: var(--accent-sec);
+        }
+        .form-control {
+            border-radius: 5px;
+        }
+        .form-control:focus,
+        .btn-add-item:focus-visible,
+        .btn-toggle:focus-visible,
+        .btn-secondary:focus-visible {
+            border-color: var(--accent-sec);
+            box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.18);
+        }
+        input[type="checkbox"],
+        input[type="radio"] {
+            accent-color: var(--accent);
+        }
+        .struct-card,
+        .metric-box {
+            border-left-color: var(--accent-sec);
+            border-radius: 5px;
+        }
+        .chip,
+        .pill-badge {
+            border-radius: 5px;
+        }
+        .btn-add-item {
+            border-color: var(--accent-sec);
+            color: var(--accent);
+        }
+        .btn-add-item:hover {
+            background-color: rgba(var(--accent-rgb), 0.08);
+        }
+        :root[data-theme="dark"] .sidebar {
+            background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 14rem);
+        }
+        :root[data-theme="dark"] .card,
+        :root[data-theme="dark"] .modal-box {
+            background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.018), transparent 45%);
         }
     </style>
 </head>

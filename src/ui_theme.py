@@ -618,24 +618,28 @@ def render_template_preview_html(
 def get_theme_css(theme_mode: str = "light", primary_color: str = "#18181B") -> str:
     """Gera folha de estilos CSS moderna e responsiva para Modo Claro (Light) ou Modo Escuro (Dark)."""
     is_light = theme_mode == "light"
-    bg_main = "#F8FAFC" if is_light else "#0B0F19"
-    bg_sidebar = "#FFFFFF" if is_light else "#111827"
-    bg_card = "#FFFFFF" if is_light else "#1E293B"
-    text_main = "#0F172A" if is_light else "#F8FAFC"
-    text_muted = "#475569" if is_light else "#94A3B8"
-    border_col = "#E2E8F0" if is_light else "#334155"
-    input_bg = "#FFFFFF" if is_light else "#0F172A"
-    shadow = "0 4px 14px rgba(15, 23, 42, 0.05)" if is_light else "0 4px 18px rgba(0, 0, 0, 0.35)"
+    bg_main = "#F2F1EE" if is_light else "#080808"
+    bg_sidebar = "#FFFFFF" if is_light else "#101010"
+    bg_card = "#FFFFFF" if is_light else "#111111"
+    text_main = "#191919" if is_light else "#EDEDED"
+    text_muted = "#686868" if is_light else "#A3A3A3"
+    border_col = "#DEDBD6" if is_light else "#292929"
+    input_bg = "#FFFFFF" if is_light else "#121212"
+    shadow = "0 10px 28px rgba(15, 15, 15, 0.07)" if is_light else "0 12px 32px rgba(0, 0, 0, 0.35)"
+    brand_red = "#D7192D"
+    brand_yellow = "#FACC15"
 
     return f"""
     <style>
         .stApp {{
             background-color: {bg_main} !important;
+            background-image: radial-gradient(ellipse at 88% 0, {brand_red}0D, transparent 34rem) !important;
             color: {text_main} !important;
         }}
         section[data-testid="stSidebar"] {{
             background-color: {bg_sidebar} !important;
             border-right: 1px solid {border_col} !important;
+            border-top: 2px solid {brand_red} !important;
         }}
         section[data-testid="stSidebar"] * {{
             color: {text_main};
@@ -646,30 +650,35 @@ def get_theme_css(theme_mode: str = "light", primary_color: str = "#18181B") -> 
         div[data-testid="stMetric"] {{
             background-color: {bg_card} !important;
             border: 1px solid {border_col} !important;
-            border-left: 4px solid {primary_color} !important;
-            border-radius: 10px !important;
+            border-left: 4px solid {brand_yellow} !important;
+            border-top: 2px solid {brand_red} !important;
+            border-radius: 6px !important;
             padding: 12px 14px !important;
             box-shadow: {shadow} !important;
         }}
         div[data-testid="stExpander"] {{
             background-color: {bg_card} !important;
             border: 1px solid {border_col} !important;
-            border-radius: 10px !important;
+            border-radius: 6px !important;
             box-shadow: {shadow} !important;
         }}
         div[data-baseweb="input"] > div, div[data-baseweb="textarea"] > div, div[data-baseweb="select"] > div {{
             background-color: {input_bg} !important;
             border-color: {border_col} !important;
             color: {text_main} !important;
-            border-radius: 8px !important;
+            border-radius: 5px !important;
         }}
         input, textarea {{
             color: {text_main} !important;
         }}
+        input[type="checkbox"], input[type="radio"] {{
+            accent-color: {brand_red} !important;
+        }}
         .ui-card {{
             background-color: {bg_card};
             border: 1px solid {border_col};
-            border-radius: 12px;
+            border-top: 2px solid {brand_red};
+            border-radius: 7px;
             padding: 18px;
             margin-bottom: 16px;
             box-shadow: {shadow};
@@ -677,7 +686,7 @@ def get_theme_css(theme_mode: str = "light", primary_color: str = "#18181B") -> 
         .ui-badge {{
             display: inline-block;
             padding: 3px 10px;
-            border-radius: 999px;
+            border-radius: 4px;
             font-size: 12px;
             font-weight: 600;
             background-color: {primary_color}20;
@@ -690,24 +699,52 @@ def get_theme_css(theme_mode: str = "light", primary_color: str = "#18181B") -> 
             font-size: 0.92rem;
         }}
         button[kind="primary"] {{
-            background: linear-gradient(135deg, {primary_color}, #2563EB) !important;
+            background: linear-gradient(110deg, {brand_red}, #A90F20) !important;
             color: #FFFFFF !important;
             border: none !important;
-            border-radius: 10px !important;
+            border-radius: 6px !important;
             font-weight: 700 !important;
             padding: 0.65rem 1.2rem !important;
-            box-shadow: 0 4px 12px {primary_color}45 !important;
+            box-shadow: 0 5px 16px {brand_red}38 !important;
             min-height: 44px !important;
+        }}
+        button[kind="primary"]:hover {{
+            filter: brightness(1.12);
+            transform: translateY(-1px);
+        }}
+        button[kind="secondary"] {{
+            border-radius: 6px !important;
+            border-color: {border_col} !important;
+        }}
+        button[kind="secondary"]:hover,
+        div[data-baseweb="input"] > div:focus-within,
+        div[data-baseweb="textarea"] > div:focus-within,
+        div[data-baseweb="select"] > div:focus-within {{
+            border-color: {brand_yellow} !important;
+        }}
+        h1, h2, h3 {{
+            letter-spacing: -0.035em !important;
+        }}
+        h2, h3 {{
+            border-bottom: 1px solid {border_col};
+            padding-bottom: 0.45rem;
+        }}
+        .stApp section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] h3 {{
+            color: {brand_red} !important;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+            font-size: 0.82rem !important;
+            letter-spacing: 0.08em !important;
+            text-transform: uppercase;
         }}
         .st-brand-logo {{
             width: 44px;
             height: 44px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(15, 76, 129, 0.25);
+            border-radius: 7px;
+            box-shadow: 0 5px 18px {brand_red}33;
             object-fit: cover;
         }}
         .stApp :focus-visible {{
-            outline: 3px solid {primary_color} !important;
+            outline: 3px solid {brand_yellow} !important;
             outline-offset: 3px !important;
         }}
 
