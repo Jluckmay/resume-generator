@@ -528,7 +528,6 @@ def api_generate() -> Response | tuple[Response, int]:
                 "success": result.success,
                 "compiler_message": result.compiler_message,
                 "latex_code": result.latex_code,
-                "pdf_base64": pdf_b64,
                 "token_metrics": result.token_metrics,
                 "structured_cv": result.structured_cv,
             }
@@ -540,6 +539,7 @@ def api_generate() -> Response | tuple[Response, int]:
             if req_api_key:
                 active_secrets.append(req_api_key)
             cleaned_data = scrub_sensitive_api_keys(resp_data, extra_secrets=active_secrets)
+            cleaned_data["pdf_base64"] = pdf_b64
 
             if is_encrypted_transport:
                 enc_response = encrypt_payload_envelope(cleaned_data, direction="resp")
