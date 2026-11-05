@@ -147,6 +147,8 @@ def apply_custom_colors_and_portfolio_to_latex(
 
     # Define cor de fundo da página (pagecolor) para condizer com o tema da UI
     text_color = "white" if _hex_luminance(p_hex) < 0.5 else "black"
+
+    # Garante que xcolor esteja carregado antes de usar \pagecolor / \definecolor
     if "\\usepackage{xcolor}" not in out:
         out = re.sub(
             r"(\\documentclass\[[^\]]*\]\{[^\}]+\})",
@@ -154,12 +156,15 @@ def apply_custom_colors_and_portfolio_to_latex(
             out,
             count=1,
         )
+
+    # Injeta \definecolor{pagebg} e \pagecolor logo após \usepackage{xcolor}
     out = re.sub(
-        r"(\\documentclass\[[^\]]*\]\{[^\}]+\})",
+        r"(\\usepackage\{xcolor\})",
         rf"\1\n\\definecolor{{pagebg}}{{HTML}}{{{p_hex}}}\n\\pagecolor{{pagebg}}",
         out,
         count=1,
     )
+
     out = re.sub(
         r"(\\begin\{document\})",
         rf"\1\n\\color{{{text_color}}}",
