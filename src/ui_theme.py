@@ -118,6 +118,20 @@ def sanitize_hex_color(color: str, default: str = "18181B") -> str:
     return cleaned[:6].upper() if len(cleaned) >= 6 else default
 
 
+def _hex_luminance(hex_color: str) -> float:
+    """Retorna luminância relativa (0-1) de uma cor HEX para decidir cor do texto."""
+    h = hex_color.lstrip("#")
+    if len(h) == 3:
+        h = "".join(c * 2 for c in h)
+    try:
+        r, g, b = (int(h[i : i + 2], 16) / 255.0 for i in (0, 2, 4))
+    except ValueError:
+        return 0.5
+    # Fórmula de luminância relativa WCAG
+    lin = lambda c: c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+
+
 def apply_custom_colors_and_portfolio_to_latex(
     latex_code: str,
     primary_color: str = "#18181B",
@@ -130,6 +144,28 @@ def apply_custom_colors_and_portfolio_to_latex(
     s_hex = sanitize_hex_color(secondary_color, "3F3F46")
 
     out = latex_code
+
+    # Define cor de fundo da página (pagecolor) para condizer com o tema da UI
+    text_color = "white" if _hex_luminance(p_hex) < 0.5 else "black"
+    if "\\usepackage{xcolor}" not in out:
+        out = re.sub(
+            r"(\\documentclass\[[^\]]*\]\{[^\}]+\})",
+            r"\1\n\\usepackage{xcolor}",
+            out,
+            count=1,
+        )
+    out = re.sub(
+        r"(\\documentclass\[[^\]]*\]\{[^\}]+\})",
+        rf"\1\n\\definecolor{{pagebg}}{{HTML}}{{{p_hex}}}\n\\pagecolor{{pagebg}}",
+        out,
+        count=1,
+    )
+    out = re.sub(
+        r"(\\begin\{document\})",
+        rf"\1\n\\color{{{text_color}}}",
+        out,
+        count=1,
+    )
     # Substitui definições de cores primárias e secundárias nos modelos integrados
     out = re.sub(r"\\definecolor\{(accent|acadnavy|primary|cvcolor)\}\{(?:HTML|RGB|rgb)\}\{[^}]+\}", rf"\\definecolor{{\1}}{{HTML}}{{{p_hex}}}", out)
     out = re.sub(r"\\definecolor\{(sidecolor|secondary|subaccent|cvaccent)\}\{(?:HTML|RGB|rgb)\}\{[^}]+\}", rf"\\definecolor{{\1}}{{HTML}}{{{s_hex}}}", out)

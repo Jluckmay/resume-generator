@@ -3775,7 +3775,7 @@
                 if (res.ok && data.latex_ok) {
                     badge.className = "pill-badge ok";
                     badge.textContent = "✅ " + (data.latex_version || "pdflatex OK");
-                    badge.title = `Backend conectado em: ${displayOrigin}\nCompilador: ${data.latex_version}\nTransporte: 🔒 Criptografado (AES-256-GCM / TLS 1.3)\nClique para configurar`;
+                    badge.title = `Backend conectado em: ${displayOrigin}\nCompilador: ${data.latex_version}\nTransporte: 🔒 Criptografado\nClique para configurar`;
                     return { ok: true, data };
                 } else {
                     throw new Error(data.error || `HTTP ${res.status}`);
@@ -3944,7 +3944,7 @@
                         if (badge) {
                             badge.className = "pill-badge ok";
                             badge.textContent = "✅ " + (data.latex_version || "pdflatex OK");
-                            badge.title = `Backend conectado em: ${displayTarget}\nCompilador: ${data.latex_version}\nTransporte: 🔒 Criptografado (AES-256-GCM / TLS 1.3)`;
+                            badge.title = `Backend conectado em: ${displayTarget}\nCompilador: ${data.latex_version}\nTransporte: 🔒 Criptografado`;
                         }
                         return;
                     } else {
