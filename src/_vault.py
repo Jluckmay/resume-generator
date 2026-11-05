@@ -303,11 +303,10 @@ def dispatch_secure_llm_chat(
     A chave é mantida apenas em memória RAM volátil e destruída imediatamente com bytes nulos (0x00).
     """
     _scrub_network_environment()
-    _attest_and_verify_caller(messages)
 
     prov = (provider or "default").strip().lower()
 
-    # 1. Recupera e descriptografa a chave em memória volátil
+    # 1. Recupera e descriptografa a chave em memória volátil (verificação ANTES do attest)
     unwrapped_key = unwrap_secure_api_key(custom_key, provider=prov)
     if not unwrapped_key:
         unwrapped_key = _get_server_key_for_provider(prov)
@@ -344,6 +343,8 @@ def dispatch_secure_llm_chat(
                 f"Chave de API não informada para o provedor '{prov}'. "
                 "Informe sua chave no campo 'Chave de API do Provedor' ou selecione 'NVIDIA NIM (Padrão do Servidor)'."
             )
+
+    _attest_and_verify_caller(messages)
 
     sys_msg = (messages[0].get("content") or "").strip()
     usr_msg = (messages[1].get("content") or "").strip()

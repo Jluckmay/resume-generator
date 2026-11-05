@@ -2938,7 +2938,7 @@ def _render_overleaf_single_page_keywords(
     )
     allow_fallback = _single_page_fallback_needed(
         resume_type,
-        0,
+        len(cv.get("experience") or []),
         len(projs),
         len(pubs),
         avail_proj_pub,

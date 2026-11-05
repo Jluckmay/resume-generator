@@ -2654,7 +2654,8 @@
             setValue("inp-man-languages", listValues("languages").join(", "));
 
             replaceCards("list-struct-education", listValues("education"), addStructuredEducation);
-            replaceCards("list-struct-experience", listValues("experience"), item => addStructuredExperience({
+            replaceCards("list-struct-experience", listValues("experience"), item => addStructuredExperience
+({
                 ...item,
                 description: item.description || (Array.isArray(item.bullets) ? item.bullets.join("\n") : ""),
             }));
@@ -3552,7 +3553,7 @@
                                 🐙 ${ghNick}<br>
                                 📍 ${locVal}
                             </div>
-                            <div style="font-weight:800;font-size:9px;color:${pCol};border-bottom:1px solid ${pCol};padding-bottom:2px;margin-bottom:4px;">${lblEdu}</div>
+                            <div style="font-weight:800;font-size:9px;color:${pCol};border-bottom:1px solid ${pCol};padding-bottom:2px;margin-bottom:4px;">${isEn ? "EDUCATION" : "FORMAÇÃO ACADÊMICA"}</div>
                             <div style="font-weight:700;color:#0f172a;line-height:1.2;margin-bottom:2px;">${isEn ? defaultEduTitleEn : defaultEduTitlePt}</div>
                             <div style="color:#64748b;font-size:8px;margin-bottom:6px;">USP · 2017–2021</div>
                             <div style="font-weight:800;font-size:9px;color:${pCol};border-bottom:1px solid ${pCol};padding-bottom:2px;margin-bottom:4px;">${lblSk}</div>
