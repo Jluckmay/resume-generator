@@ -238,11 +238,11 @@ def build_resume_pipeline(
     links = {
         "email": effective_email,
         "location": effective_location,
-        "linkedin": li_data.get("url") or li_url_norm or (linkedin_url.strip() if linkedin_url else ""),
-        "github": gh_data.get("url") or gh_url_norm or (github_input.strip() if github_input else ""),
-        "orcid": orcid_data.get("url") or orcid_url_norm or (orcid_input.strip() if orcid_input else ""),
-        "scholar": scholar_data.get("url") or scholar_url_norm or (scholar_input.strip() if scholar_input else ""),
-        "lattes": lattes_data.get("url") or lattes_url_norm or (lattes_url.strip() if lattes_url else ""),
+        "linkedin": li_data.get("url") or li_url_norm or (linkedin_url.strip() if linkedin_url else "") or portfolio_data.get("social_links", {}).get("linkedin", ""),
+        "github": gh_data.get("url") or gh_url_norm or (github_input.strip() if github_input else "") or portfolio_data.get("social_links", {}).get("github", ""),
+        "orcid": orcid_data.get("url") or orcid_url_norm or (orcid_input.strip() if orcid_input else "") or portfolio_data.get("social_links", {}).get("orcid", ""),
+        "scholar": scholar_data.get("url") or scholar_url_norm or (scholar_input.strip() if scholar_input else "") or portfolio_data.get("social_links", {}).get("scholar", ""),
+        "lattes": lattes_data.get("url") or lattes_url_norm or (lattes_url.strip() if lattes_url else "") or portfolio_data.get("social_links", {}).get("lattes", ""),
         "portfolio": portfolio_data.get("url") or (portfolio_url.strip() if portfolio_url else ""),
         "github_nick": gh_data.get("username") or gh_nick,
         "linkedin_nick": li_data.get("linkedin_nick") or li_nick,
@@ -255,14 +255,17 @@ def build_resume_pipeline(
 
     combined_extra = extra_notes.strip()
     if portfolio_data and not portfolio_data.get("error"):
+        port_social = portfolio_data.get("social_links", {})
+        social_parts = [f"{k.upper()}: {v}" for k, v in port_social.items() if v]
         port_summary_parts = [
             f"PORTFOLIO_URL: {portfolio_data.get('url', '')}",
             f"TITLE: {portfolio_data.get('title', '')}",
             f"DESC: {portfolio_data.get('description', '')}",
+            f"SOCIAL: {' | '.join(social_parts)}" if social_parts else "",
             f"SECTIONS: {', '.join(portfolio_data.get('headings') or [])}",
             f"CONTENT: {portfolio_data.get('raw_text', '')[:1200]}",
         ]
-        port_block = " | ".join(p for p in port_summary_parts if not p.endswith(": "))
+        port_block = " | ".join(p for p in port_summary_parts if not p.endswith(": ") and p)
         combined_extra = f"{combined_extra}\n{port_block}".strip()
 
     raw_profile_data: Dict[str, Any] = {

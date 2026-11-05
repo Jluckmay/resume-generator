@@ -1786,6 +1786,24 @@ def extract_portfolio(portfolio_url: str = "") -> Dict[str, Any]:
                 if 4 < len(cand) < 60:
                     portfolio_loc = cand
 
+        # 7. Extração de links sociais da página de portfólio (GitHub, LinkedIn, ORCID, Lattes, Scholar, etc.)
+        social_links: Dict[str, str] = {}
+        for a_tag in soup.find_all("a", href=True):
+            hr = a_tag["href"].strip()
+            hr_low = hr.lower()
+            if hr_low.startswith(("mailto:", "tel:", "javascript:")):
+                continue
+            if "github.com/" in hr_low and "github" not in social_links:
+                social_links["github"] = hr
+            elif "linkedin.com/in/" in hr_low and "linkedin" not in social_links:
+                social_links["linkedin"] = hr
+            elif "orcid.org/" in hr_low and "orcid" not in social_links:
+                social_links["orcid"] = hr
+            elif "lattes.cnpq.br/" in hr_low and "lattes" not in social_links:
+                social_links["lattes"] = hr
+            elif "scholar.google.com/" in hr_low and "scholar" not in social_links:
+                social_links["scholar"] = hr
+
         result.update(
             {
                 "title": title,
@@ -1800,6 +1818,7 @@ def extract_portfolio(portfolio_url: str = "") -> Dict[str, Any]:
                 "skills": portfolio_skills,
                 "educations": educations,
                 "employments": employments,
+                "social_links": social_links,
             }
         )
     except Exception as exc:
