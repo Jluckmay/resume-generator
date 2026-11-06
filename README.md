@@ -1,416 +1,6 @@
-# 📄 Gerador Automático de Currículos LaTeX / Automatic LaTeX Resume Generator
+# 📄 Automatic LaTeX Resume Generator / Gerador Automático de Currículos LaTeX
 
-> 🌐 **Idioma / Language:** [🇧🇷 Português (pt-BR)](#-português-pt-br) | [🇺🇸 English (en-US)](#-english-en-us)
-
----
-
-## 🇧🇷 Português (`pt-BR`)
-
-Gerador automático de currículos **Acadêmicos** e **Profissionais** em **LaTeX + PDF** (nos idiomas `pt-BR` e `en-US`), alimentado por **Múltiplos Provedores de IA** (**NVIDIA NIM**, **Google Gemini**, **Anthropic Claude**, **OpenAI**, **DeepSeek**) com arquitetura modular de **Plugins de Economia de Tokens**, **Criptografia Efêmera em Navegador (AES-256-GCM)** e **Cofre de Memória Zero-Storage (Task-Bound Enclave)**.
-
-### 📋 Requisitos do Projeto
-
-Para executar o gerador e compilar os currículos em PDF, o ambiente deve atender aos seguintes requisitos obrigatórios:
-
-1. **Compilador LaTeX (`pdflatex`) — Obrigatório**:
-   - Distribuição **TeX Live** (2023 ou superior recomendado) ou **MiKTeX** instalada e disponível no `PATH` do sistema.
-   - Pacotes LaTeX utilizados pelos templates integrados (incluídos no TeX Live / MiKTeX): `babel` (`brazil` e `english`), `lmodern`, `roboto`, `sourcesanspro`, `raleway`, `fontawesome5`, `tikz`, `multicol`, `tcolorbox`, `adjustbox`, `array`, `fancyhdr`, `geometry`, `xcolor`, `graphicx`, `enumitem`, `titlesec` e `hyperref`.
-   - **Instalação rápida do compilador LaTeX**:
-     - **Windows (TeX Live ou MiKTeX via Winget)**:
-       ```powershell
-       winget install -e --id MiKTeX.MiKTeX
-       # ou TeX Live completo: https://www.tug.org/texlive/
-       ```
-     - **Linux (Ubuntu / Debian)**:
-       ```bash
-       sudo apt update && sudo apt install -y texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-lang-portuguese texlive-fonts-recommended texlive-fonts-extra
-       ```
-     - **macOS (Homebrew)**:
-       ```bash
-       brew install --cask mactex-no-gui
-       ```
-   - **Verificação do compilador**:
-     ```powershell
-     pdflatex --version
-     # ou via CLI do projeto:
-     python cli.py --lang pt-br --check-deps
-     ```
-
-2. **Python (`>= 3.10`) e Dependências Python (`requirements.txt`)**:
-   - `requests >= 2.31.0`
-   - `beautifulsoup4 >= 4.12.0`
-   - `Pillow >= 10.0.0`
-   - `streamlit >= 1.32.0`
-   - `pypdf >= 4.0.0`
-   - `flask >= 3.0.0`
-   - `cryptography >= 41.0.0`
-   - **Instalação**:
-     ```powershell
-     pip install -r requirements.txt
-     ```
-
-### Principais Recursos
-
-1. **Duas Interfaces Web Completas (HTML5 `index.html` + `server.py` e Streamlit `app.py`) com Detecção Automática de Tema e Idioma**:
-   - **Design 100% Responsivo & Mobile-First**: interfaces otimizadas para smartphones, tablets e monitores desktop com breakpoints fluidos, ajuste adaptativo de grades (`grid-template-columns`), áreas de toque acessíveis (min 44px) e visualizador de PDF redimensionável dinamicamente (`clamp()`).
-   - **Identidade Visual & Ícone Oficial**: logotipo vetorial moderno nos formatos `SVG`, `PNG` (512x512, 192x192, 32x32, 16x16) e `ICO` multi-resolução, integrado na guia do navegador (`favicon`), barra de navegação e cabeçalhos de ambas as interfaces.
-   - **Paridade Total de Recursos**: tanto a interface web HTML nativa (`index.html` servida por `python server.py`) quanto a interface Streamlit (`streamlit run app.py`) compartilham um design limpo, agradável e intuitivo com exatamente os mesmos recursos.
-   - **Detecção Automática**: detectam automaticamente na inicialização o **idioma padrão** (`navigator.language` / `Accept-Language` ou idioma do SO) e o **tema visual padrão** (`prefers-color-scheme` / registro do SO), adotando-os sem necessidade de configuração manual.
-   - **Alternância Instantânea**: incluem seletor rápido entre **☀️ Modo Claro** e **🌙 Modo Escuro** e alternância instantânea entre **Português (`pt-BR`)** e **Inglês (`en-US`)**.
-2. **Preview Visual em Tempo Real dos Modelos LaTeX e Customização de Cores**:
-   - **Preview Interativo**: exibe uma prévia visual fiel do layout do modelo LaTeX escolhido (`modern_pro`, `academic_classic`, `tech_sidebar`, `minimal_ats`, `overleaf_russell_ti`, `overleaf_awesome_cv`, `overleaf_single_page_keywords`, `nico_krieger`, `google_standard`, `ai_ats_max`) que reflete instantaneamente as cores e o idioma selecionados antes mesmo de compilar o PDF.
-   - **Paletas e Seletor de Cores (`HEX`)**: escolha entre 6 paletas executivas/acadêmicas predefinidas (*Grafite ATS (Padrão)*, *Azul Oceano*, *Azul Marinho Acadêmico*, *Verde Esmeralda Tech*, *Índigo Real*, *Bordô Clássico*) ou defina manualmente a **Cor Principal** e a **Cor Secundária** aplicadas ao código LaTeX (`\definecolor`).
-3. **Modo Duplo de Entrada de Dados: Importação Automática & Inserção Manual Estruturada**:
-   - **Alternância Flexível na Interface**: escolha facilmente entre **Importar Informações** ou **Inserir Manualmente** tanto na aplicação Web quanto no Streamlit.
-   - **Modo Importação (Perfis Online & Arquivos)**:
-     - **Google Scholar**: extrai nome do pesquisador, filiação institucional, métricas de impacto acadêmico (Total de Citações, h-index, i10-index) e lista completa de publicações com título, autores, conferência/periódico, ano e número de citações (aceita ID de usuário ou URL do perfil público).
-     - **Portfólio Pessoal (`URL`)**: extrai título, descrição, seções (`h1`/`h2`/`h3`), bio, projetos, idiomas estruturados com proficiência, premiações/menções honrosas e publicações científicas com link DOI diretamente da página web do usuário, adicionando o link clicável no cabeçalho do PDF.
-     - **GitHub**: extrai bio, localização, linguagens principais e repositórios de maior destaque via API REST pública (aceita URL completa ou username), com análise automatizada de README para extração de resumos contextuais e detecção completa de todas as ferramentas e linguagens utilizadas.
-     - **ORCID**: extrai biografia, formação (`educations`), vínculos (`employments`), bolsas/auxílios (`fundings`), distinções e artigos publicados (`works` com DOI) via API Pública v3.0 (aceita ID ou URL).
-     - **Lattes**: parser nativo para o arquivo oficial `XML`/`ZIP` exportado do CNPq (`CURRICULO-VITAE`), além de suporte a PDF, HTML, URL ou ID de 16 dígitos / texto complementar.
-     - **LinkedIn**: suporte a URL do perfil ou username, upload do PDF oficial exportado pelo LinkedIn (*Salvar como PDF*) e texto complementar.
-     - **Entrada Suplementar de Idiomas e Premiações**: campos opcionais na interface de importação para enriquecer ou complementar dados ausentes nas plataformas.
-     - **Foto de Perfil**: normalização automática de imagem (`PNG`/`JPG`/`WebP`) via Pillow para inclusão no LaTeX (`\includegraphics`).
-   - **Modo Inserção Manual (Preenchimento Direto & Cards Estruturados)**:
-     - Permite que candidatos sem perfis públicos ou que prefiram controle editorial completo insiram seus dados diretamente em formulários estruturados na interface.
-     - **Cards Dinâmicos com Botões de Adicionar/Remover**: formulários estruturados com botões `+ Adicionar` e `Remover` com campos dedicados para:
-       - **Formação Acadêmica**: Grau/Curso, Instituição de Ensino, Período e Detalhes/Ênfase/Tese.
-       - **Experiência Profissional**: Cargo/Título, Empresa/Organização, Período, Localização e Descrição/Realizações.
-       - **Projetos Relevantes**: Nome do Projeto, Tecnologias Utilizadas, Link/Repositório (URL) e Descrição.
-       - **Publicações & Artigos**: Título da Publicação, Periódico/Conferência, Ano, Autores e DOI/Link.
-       - **Prêmios & Certificações**: Título/Certificação, Ano e Instituição/Detalhes.
-     - **Modo Rápido / Texto em Lote (Expansível)**: mantém suporte opcional a sintaxe linha por linha separada por barras verticais (`|`) ou objetos JSON para colar múltiplos itens em bloco.
-     - Preserva campos opcionais de links (GitHub, Google Scholar, LinkedIn, Portfólio, ORCID, Lattes e Foto) para enriquecer o cabeçalho do currículo.
-4. **10 Modelos LaTeX Integrados (incluindo Padrão Google, Otimizado para IA & ATS, Modelo Russell, Awesome CV, Single Page + Keywords e Modelo Nico Krieger) + Suporte a Template `.tex` Customizado**:
-   - `ai_ats_max`: **Otimizado para IA & ATS (Máxima Legibilidade por LLMs & ATS Neurais)** — Desenvolvido especificamente para triagem automatizada por LLMs (Gemini, Claude, GPT) e sistemas ATS neurais (Workday, Greenhouse, Lever). Fluxo textual 100% linear em coluna única, metadados semânticos explícitos, matriz de competências e palavras-chave (Core Competencies & Keywords) dedicada para match semântico e compatibilidade Unicode nativa (`glyphtounicode`). Multi-página abrangente para máxima densidade de indexação.
-   - `google_standard`: **Padrão Google (Big Tech / Software Engineer)** — Baseado nas diretrizes de recrutamento Big Tech (Google SWE / Gayle Laakmann McDowell). Página única densa garantida (0.5 polegadas / 1.0 cm de margem), destaque em Google Blue (`#0B57D0`), estrutura XYZ de realizações ("Conquistou [X] medido por [Y], realizando [Z]"), divisórias horizontais limpas e hierarquia clássica (Empresa no topo, cargo em itálico abaixo).
-   - `overleaf_russell_ti`: **Modelo Russell (Currículo T.I.)** — Baseado no template Russell CV ([ver no Overleaf](https://www.overleaf.com/read/rgfqqnnynrmv#d5b171)). Cabeçalho com foto à esquerda, ícones FontAwesome 5, títulos com destaque nas 3 primeiras letras, tabela de skills e círculos de proficiência de idiomas em 6 níveis CEFR (A1 a C2).
-   - `overleaf_awesome_cv`: **Awesome CV (Jason Richards)** — Baseado no modelo Jason Richards Résumé ([ver no Overleaf](https://www.overleaf.com/articles/jason-richards-resume/chbxgnfyyvfc)) derivado do Awesome-CV. Tipografia Roboto + Source Sans Pro, cabeçalho centralizado, títulos com destaque colorido nas 3 primeiras letras e rodapé executivo de 3 colunas.
-   - `overleaf_single_page_keywords`: **Single Page + Keywords** — Baseado no modelo de Primož Godec e Salman Maqbool ([ver no Overleaf](https://www.overleaf.com/latex/templates/sample-single-page-resume-with-keywords/wmcxcgmtkxzk)). Página única estrita, fonte Raleway, cabeçalho em 2 colunas, ícones circulares em TikZ + FontAwesome 5, seção Summary em largura total e corpo em 2 colunas com linha de `Keywords` por cargo.
-   - `nico_krieger`: **Modelo Nico Krieger (`my-resume.cls`)** — Baseado no template de Dr. Nico Krieger ([ver no Overleaf](https://www.overleaf.com/latex/templates/my-resume/rqzfybxqvpny) e no [GitHub](https://github.com/GiantMolecularCloud/my-resume)). Cabeçalho escuro de largura total com nome, cargo/tagline e foto opcional; barra lateral destacada (`highlightbar`) para contatos, habilidades avaliadas em 5 pontos (`\skilldots`) e idiomas em 6 níveis CEFR (`\langdots`); e coluna principal para experiência, formação, projetos e publicações.
-   - `modern_pro`: Moderno Executivo (Profissional & Tech)
-   - `academic_classic`: Acadêmico Clássico (Pesquisador / CNPq / Pós-Graduação)
-   - `tech_sidebar`: Tech & Engenharia Duas Colunas (Barra Lateral) — Página única estrita com colunas balanceadas (sem página inicial em branco)
-   - `minimal_ats`: Minimalista ATS-Friendly (Alta Densidade) — Página única estrita de alta densidade
-   - **Template Customizado (`.tex`)**: envie qualquer arquivo `.tex` próprio e o modelo preencherá a estrutura mantendo o preâmbulo original.
-5. **Suporte Multi-Provedor com Chaves Próprias Opcionais e Criptografia em Navegador (Zero-Storage)**:
-   - **6 Provedores de IA Suportados**: escolha entre **NVIDIA NIM** (padrão de servidor ou chave própria), **Google Gemini**, **Anthropic Claude**, **OpenAI** e **DeepSeek**, com modelos de última geração e fallback automático.
-   - **Criptografia Efêmera no Navegador (`SECKEY_V1`)**: ao inserir uma chave própria na interface web, ela é criptografada e ofuscada em tempo real via **Web Crypto API (AES-256-GCM)** com vetor de inicialização aleatório e derivação dinâmica baseada em timestamp antes de transitar na rede.
-   - **Isolamento de Memória & Destruição Imediata (Zero-Storage)**: o backend abre o envelope criptográfico exclusivamente em buffers voláteis na RAM (`src/_vault.py`), despacha a requisição via TLS 1.3 puro e preenche a memória com bytes nulos (`0x00`) no bloco `finally`, expurgando credenciais com `os.environ.pop` para impedir que processos-filhos (como o `pdflatex`) tenham acesso a qualquer segredo.
-6. **Política Estrita de Zero-Storage para Documentos Recebidos e Gerados (Sessão Volátil em Memória)**:
-   - **Zero Retenção em Disco**: o servidor não armazena currículos gerados (`.pdf`, `.tex`), fotos de perfil enviadas, PDFs do LinkedIn ou arquivos do Lattes. Todos os dados e arquivos são processados exclusivamente na memória volátil durante a requisição ou sessão ativa.
-   - **Compilação Efêmera & Destruição Imediata (`finally`)**: a compilação LaTeX ocorre em diretório temporário efêmero isolado (`tempfile.mkdtemp`). Imediatamente após a conversão do PDF para base64/bytes em RAM, todos os arquivos temporários são sobrescritos com bytes nulos (`0x00`) e expurgados via `secure_wipe_and_remove_dir` no bloco `finally:`.
-   - **Cache de Tokens Volátil (RAM-Only)**: o cache de tokens opera em memória volátil durante a execução do processo (`in_memory_only=True`), sem gravação de currículos ou prompts em arquivos de disco no servidor.
-7. **Modo Offline Zero-Token & Modo de Revisão Cirúrgica (Economia Máxima de Tokens)**:
-   - **Geração Direta Determinística (0 Tokens)**: gere currículos completos em menos de 1 segundo sem consumir nenhuma cota ou chamada de IA (`--no-ai` no CLI, `provider="none"` no backend/HTML/Streamlit, ou via `python scripts/generate_direct_resume.py`). Os extratores mapeiam dados reais diretamente para os 10 modelos LaTeX ou template customizado com sanitização rigorosa de caracteres especiais e regras anti-alucinação.
-   - **Modo Apenas Revisão (Review-Only)**: economiza até 75% dos tokens comparado à síntese tradicional! O motor gera o esqueleto LaTeX determinístico completo e submete apenas o corpo do documento (`\begin{document}` a `\end{document}`) ao modelo de IA para polimento textual, fortalecimento de verbos de ação e validação de sintaxe, sem gastar tokens com preâmbulos ou cabeçalhos estruturais.
-
-### 📂 Estrutura de Arquivos e Diretórios
-
-O projeto segue padrões modulares da indústria, organizando código, testes, scripts, modelos e assets de forma limpa e intuitiva:
-
-```
-latex-resume/
-├── .github/
-│   └── workflows/
-│       ├── ci.yml              # CI automatizado com matriz de testes (Python 3.10, 3.11, 3.12)
-│       └── deploy-pages.yml    # Build e deploy contínuo no GitHub Pages (index.html + assets)
-├── assets/                     # Identidade visual, logotipos SVG/PNG e favicons do projeto
-│   ├── icons/                  # Ícones organizados em múltiplos formatos e resoluções
-│   │   ├── favicon.svg         # Vetor SVG de alta definição (512x512)
-│   │   ├── favicon.png         # Ícone principal PNG (512x512)
-│   │   ├── favicon-192.png     # Variante PWA / Android (192x192)
-│   │   ├── favicon-32.png      # Ícone para guias desktop (32x32)
-│   │   ├── favicon-16.png      # Ícone compacto (16x16)
-│   │   ├── apple-touch-icon.png # Ícone para iOS Safari / Apple Home Screen (180x180)
-│   │   └── favicon.ico         # Ícone multi-resolução para navegadores
-│   └── README.md               # Especificações técnicas de branding e tokens de cor
-├── examples/                   # Dados de exemplo e templates de referência
-│   ├── sample_lattes.xml       # Arquivo XML de teste padrão CNPq
-│   ├── sample_photo.png        # Foto neutra de perfil para testes
-│   ├── custom_template_example.tex # Exemplo de template .tex customizado
-│   ├── custom_template_example.pdf # PDF de referência compilado
-│   └── README.md               # Guia de utilização dos arquivos de exemplo
-├── scripts/                    # Scripts utilitários de manutenção e geração
-│   ├── generate_direct_resume.py # Gerador direto determinístico sem IA (Zero-Token)
-│   ├── generate_icons.py       # Gerador dos ícones e favicons oficiais
-│   ├── clean_artifacts.py      # Script de limpeza de resíduos temporários e caches
-│   └── README.md               # Documentação dos scripts utilitários
-├── src/                        # Pacote central da aplicação
-│   ├── _vault.py               # Enclave criptográfico em memória RAM (ENC_PAYLOAD_V1 / SECKEY_V1)
-│   ├── compiler.py             # Validação e compilação LaTeX segura com pdflatex
-│   ├── config.py               # Constantes, diretórios e configurações de provedores de IA
-│   ├── direct_builder.py       # Construtor determinístico direto (0 tokens) a partir dos extratores
-│   ├── extractors.py           # Parsers multi-fonte (GitHub, Google Scholar, ORCID, Lattes, LinkedIn, Portfólio)
-│   ├── i18n.py                 # Dicionários de internacionalização (pt-BR e en-US)
-│   ├── llm_client.py           # Cliente orquestrador multi-provedor (NVIDIA, Gemini, Claude, OpenAI, DeepSeek)
-│   ├── nvidia_client.py        # Adaptador de compatibilidade NVIDIA NIM
-│   ├── pipeline.py             # Pipeline completo de síntese e compilação
-│   ├── templates.py            # 10 modelos LaTeX integrados e suporte a templates customizados
-│   ├── token_plugins.py        # Plugins de economia de tokens (Caveman, TOON, ShortKey, Cache)
-│   ├── ui_theme.py             # Temas visuais e CSS responsivo para Streamlit
-│   ├── py.typed                # Marcador PEP 561 de tipagem estática
-│   └── README.md               # Documentação detalhada da arquitetura de módulos
-├── tests/                      # Suíte de testes automatizados com Pytest (214+ testes com 100% de aprovação)
-│   ├── conftest.py             # Configurações globais e fixtures compartilhadas do Pytest
-│   ├── test_academic_mode_and_colors.py # Testes de modo acadêmico, seções e cores personalizadas
-│   ├── test_awards_and_orcid.py# Higienização de prêmios, exclusão de bolsas redundantes e ORCID
-│   ├── test_chronological_ordering_and_deduplication.py # Ordenação cronológica e deduplicação
-│   ├── test_direct_builder.py  # Testes do modo direto offline (0 tokens) e revisão cirúrgica
-│   ├── test_encrypted_comm.py  # Criptografia ponta a ponta AES-256-GCM e blindagem anti-extração
-│   ├── test_english_standardization_and_dedup.py # Padronização em inglês e tradução consistente
-│   ├── test_experience_nouns_and_email.py # Validação de substantivos de cargo e formato de email
-│   ├── test_generation_resilience_and_ui_polish.py # Resiliência de pipeline e polimento de UI
-│   ├── test_latex_formatting.py# Formatação LaTeX, auditoria de segurança e reparo automático
-│   ├── test_manual_input_mode.py # Modo duplo de entrada (importação vs manual estruturado)
-│   ├── test_platform_display.py# Exibição elegante de handles e identificadores sociais/acadêmicos
-│   ├── test_projects_enrichment.py # Enriquecimento de stack e links de projetos
-│   ├── test_scholar_and_publications.py # Fusão inteligente de artigos entre Scholar, ORCID e Lattes
-│   ├── test_single_page_template.py # Compilação estrita em 1 página (Google, Tech Sidebar, Minimal ATS, Keywords)
-│   ├── test_ui_assets.py       # Integridade de ícones, favicons, responsividade e acessibilidade
-│   ├── test_zero_storage.py    # Garantia de Zero-Storage, sobrescrita binária 0x00 e memória volátil
-│   └── README.md               # Documentação detalhada dos 16 módulos de teste e invariantes
-├── app.py                      # Interface gráfica interativa em Streamlit
-├── server.py                   # Servidor backend de API (Flask / Gunicorn) para GitHub Pages e Render
-├── cli.py                      # Interface de linha de comando (CLI)
-├── index.html                  # Interface gráfica web nativa para GitHub Pages e servidor local
-├── pyproject.toml              # Metadados do projeto, entrypoints CLI, linters e Pytest
-├── requirements.txt            # Dependências Python para pip
-├── Dockerfile                  # Container Docker de produção com TeX Live e pdflatex
-├── render.yaml                 # Especificação de infraestrutura como código para o Render
-├── .gitignore                  # Regras estritas de exclusão de artefatos, chaves e caches
-├── .dockerignore              # Exclusões para build enxuto do container Docker
-└── README.md                   # Documentação completa em Português e Inglês
-```
-
-### 🚀 Publicação no GitHub, GitHub Pages e Backend no Render
-
-O projeto foi arquitetado para separação segura entre Frontend Estático (GitHub Pages) e Backend de Compilação (Render):
-
-```mermaid
-flowchart LR
-    A["🌐 Frontend Web Oficial<br>(https://jluckmay.github.io/latex-resume/)"] -- "1. POST /api/generate<br>(Origin: https://jluckmay.github.io<br>+ Envelope SECKEY_V1 Opcional)" --> B["🛡️ Backend no Render<br>(Docker + pdflatex + Gunicorn)"]
-    B -- "2. Síntese com Economia de Tokens<br>(TLS 1.3 + Zero-Storage Vault)" --> C["⚡ Motor de IA Multi-Provedor<br>(NVIDIA NIM / Gemini / Claude / OpenAI / DeepSeek)"]
-    C -- "3. JSON Estruturado / TOON" --> B
-    B -- "4. Compilação LaTeX Segura<br>(-no-shell-escape + openin_any=p)" --> B
-    B -- "5. PDF Compilado (Base64) + X-Backend-Attestation" --> A
-```
-
-#### 1. Hospedagem do Frontend no GitHub Pages (`https://jluckmay.github.io/latex-resume/`)
-- Ao fazer push para a branch `main`, o GitHub Actions (`.github/workflows/deploy-pages.yml`) publica automaticamente a interface web (`index.html`) no GitHub Pages.
-- O frontend aplica **Content Security Policy (CSP)** estrita e cabeçalhos de atestação de cliente (`X-Resume-Client: jluckmay-github-pages-v1`).
-
-#### 2. Criação do Backend no Render (`Dockerfile` + `render.yaml`)
-1. No painel do [Render](https://dashboard.render.com/), selecione **New +** -> **Blueprint** e conecte o repositório do GitHub (ou crie um **Web Service** selecionando runtime **Docker**).
-2. O arquivo `render.yaml` configura automaticamente o serviço web com o `Dockerfile` (que inclui TeX Live completo com `pdflatex` e pacotes tipográficos).
-3. Na aba **Environment** do serviço no Render, defina a variável de ambiente:
-   - `NVIDIA_API_KEY`: sua chave de API da NVIDIA (`nvapi-...`).
-4. O backend expõe o endpoint de monitoramento de saúde `/healthz`.
-
-#### 3. Bloqueio Estrito de Conexão Mútua (Exclusivo para `https://jluckmay.github.io/`)
-- O backend (`server.py`) rejeita **qualquer conexão** cuja origem ou `Referer` não provenha de `https://jluckmay.github.io/` (retornando `403 Forbidden`).
-- **Chamada direta a partir da página autorizada**:
-  Qualquer script hospedado em `https://jluckmay.github.io/` pode solicitar a criação de currículos diretamente via `fetch`:
-  ```javascript
-  const formData = new FormData();
-  formData.append("resume_type", "profissional"); // ou "academico"
-  formData.append("template_id", "google_standard"); // ou "ai_ats_max", "modern_pro", etc.
-  formData.append("github", "octocat");
-  formData.append("portfolio", "https://jluckmay.github.io/");
-
-  const response = await fetch("https://<seu-servico-backend>.onrender.com/api/generate", {
-    method: "POST",
-    headers: {
-      "X-Resume-Client": "jluckmay-github-pages-v1",
-      "X-Client-Timestamp": Date.now().toString()
-    },
-    body: formData
-  });
-  const data = await response.json();
-  // data.pdf_base64 contém o PDF gerado em base64
-  ```
-
-### 🔒 Auditoria de Segurança do Projeto & Correções Aplicadas
-
-| Vulnerabilidade Auditada | Risco em Produção | Correção Aplicada |
-| :--- | :--- | :--- |
-| **Exposição da Chave em Repositório Público** | Bots/scrapers ou usuários extraírem a credencial do código, documentos ou commits do GitHub. | **Política Zero-Secret no Git & Cofre Efêmero Desacoplado**: O repositório Git, commits, documentos e arquivos distribuídos contêm **zero credenciais, zero shards e zero chaves embutidas**. A chave padrão da API é configurada exclusivamente no ambiente privado do backend no Render (`NVIDIA_API_KEY`), fora do Git. Ao iniciar, o `_vault.py` purga a variável de `os.environ` imediatamente (`os.environ.pop`), valida a atestação de chamada (`src/nvidia_client.py` e `src/llm_client.py`), despacha via TLS 1.3 puro e preenche buffers voláteis na memória RAM com zeros (`0x00`) em bloco `finally:`. Os usuários finais do GitHub Pages utilizam a compilação do backend sem jamais ter acesso ou capacidade de recuperar a chave da API. Chaves próprias informadas na interface web trafegam criptografadas com Web Crypto AES-256-GCM (`SECKEY_V1`) e são igualmente destruídas em RAM após a geração. Para uso local independente, as chaves podem ser informadas pelo usuário via variáveis de ambiente, parâmetro `--api-key` ou na interface. |
-| **Execução Arbitrária de Código LaTeX (RCE)** | Primitivas `\write18` ou `\directlua` em templates customizados. | **Sanitização Prévia + Isolamento TeX**: bloqueio por regex de comandos do sistema (`\write18`, `\csname`, `\catcode`, `\input{/`). Execução do `pdflatex` com `-no-shell-escape`, ambiente de subprocesso higienizado e parâmetros Web2C `openin_any=p` e `openout_any=p` (impede leitura/escrita de arquivos fora do diretório de compilação). |
-| **SSRF (Server-Side Request Forgery)** | Usuário informar URLs de metadados AWS/GCP (`169.254.169.254`) ou rede interna (`127.0.0.1`, `10.0.0.0/8`). | **Validador de IP Público (`_safe_http_get`)**: resolução DNS com verificação `ip.is_global == True`. Bloqueio de loopback, ranges privados e link-local, além de limite de download de 1.5 MB e validação de redirecionamentos. |
-| **ZIP Bomb / XXE Bomb (Billion Laughs)** | Upload de ZIP malicioso ou XML com entidades recursivas do Lattes. | Limite estrito de descompressão (15 MB), bloqueio de declarações `<!DOCTYPE` e `<!ENTITY` antes de invocar o parser XML, e limite de 25 MP para fotos com Pillow (`Image.MAX_IMAGE_PIXELS`). |
-| **Acesso Não Autorizado ao Backend** | Terceiros usarem o backend no Render para consumir créditos da API. | **Bloqueio Estrito de Origem e Referer**: CORS restrito exclusivamente a `https://jluckmay.github.io`, validação de cabeçalhos mútuos (`X-Resume-Client`, `X-Backend-Attestation`) e Rate Limiting em memória por IP (máx. 15 gerações / 10 min). |
-| **Interceptação e Eavesdropping de Rede** | Sniffing de pacotes ou inspeção na aba Network do DevTools expondo currículos, dados pessoais ou credenciais em trânsito. | **Criptografia Bidirecional de Ponta a Ponta (`ENC_PAYLOAD_V1`)**: toda a comunicação entre o frontend (`index.html`) e o backend (`server.py`) trafega cifrada via envelope **AES-256-GCM** com vetor de inicialização aleatório e chave derivada dinamicamente por timestamp (`crypto.subtle`). Qualquer ferramenta de inspeção de rede (DevTools, Wireshark, proxies) visualiza estritamente texto cifrado (`ciphertext`), tornando ilegível e inacessível qualquer dado em trânsito. |
-| **Tentativa de Extração de Chaves via Console / Probing** | Usuários executarem scripts no Console do navegador (`window.apiKey`, `fetch('/api/status')`) ou ferramentas (curl/Postman) para recuperar a chave padrão de API do servidor. | **Blindagem de Console & Defesa Zero-Leak**: A chave padrão do servidor reside exclusivamente em memória volátil de backend (Render Enclave) e **nunca** é transmitida ao cliente em nenhuma circunstância. O endpoint `/api/status` é sanitizado expurgando qualquer nome de variável (`env_vars`). Todos os endpoints e tratadores de erro (`400`, `403`, `404`, `500`) passam pelo filtro recursivo `scrub_sensitive_api_keys`, que detecta e substitui qualquer padrão de chave ou segredo ativo por `[REDACTED_API_KEY]`. No frontend, o escopo `window` possui propriedades congeladas (`window.apiKey = undefined`), impedindo exfiltração via console. |
-
-### 🧠 Provedores de IA Suportados & Seleção de Modelos
-
-O gerador suporta múltiplos provedores de inteligência artificial de ponta, permitindo o uso da infraestrutura padrão do servidor ou chaves de API próprias fornecidas pelo usuário:
-
-| Provedor | Modelo Primário Recomendado | Modelos Alternativos / Fallbacks | Características Principais |
-| :--- | :--- | :--- | :--- |
-| **NVIDIA NIM** *(Padrão / Chave)* | `nvidia/nemotron-3.5-super-vl-120b-a12b` | `stepfun-ai/step-5-preview`, `google/gemma-4-31b-it`, `z-ai/glm-5.3` | 120B MoE (12B ativos), latência < 1.0s, suporte a `enable_thinking: False` (0 tokens ocultos). Padrão do backend. |
-| **Google Gemini** *(Chave própria)* | `gemini-2.5-flash` | `gemini-2.5-pro`, `gemini-1.5-pro`, `gemini-1.5-flash` | Altíssima velocidade, raciocínio aprimorado, conformidade estrita com schemas JSON estruturados. |
-| **Anthropic Claude** *(Chave própria)* | `claude-3-7-sonnet-20250219` | `claude-3-5-sonnet-20241022`, `claude-3-5-haiku-20241022` | Síntese de perfil executivo e acadêmico impecável, alta precisão textual e vocabulário formal polido. |
-| **OpenAI** *(Chave própria)* | `gpt-4o` | `gpt-4o-mini`, `o3-mini`, `gpt-4-turbo` | Modelo emblemático multimodal, consistência determinística em bullet points XYZ e métricas de impacto. |
-| **DeepSeek** *(Chave própria)* | `deepseek-chat` (DeepSeek V3) | `deepseek-reasoner` (DeepSeek R1) | Excelente relação custo-benefício, forte desempenho em codificação técnica e resumo curricular estruturado. |
-
-### Plugins de Economia de Tokens (`src/token_plugins.py`)
-
-| Plugin | Função e Impacto na Economia de Tokens |
-| :--- | :--- |
-| **`CavemanPromptPlugin`** | Aplica diretivas da skill `caveman` (zero preâmbulo, zero cercas markdown, instruções ultra-densas) preservando 100% da qualidade formal (`pt-BR` ou `en-US`) nos textos do currículo (~65% de redução de verbosidade). |
-| **`ThinkingSuppressionPlugin`** | Injeta `chat_template_kwargs={"enable_thinking": False}`, reduzindo o gasto com `reasoning_tokens` ocultos para **0 tokens**. |
-| **`TOONContextPrunerPlugin`** | Converte os dados brutos de GitHub, ORCID, Lattes, LinkedIn e Portfólio para **TOON (Token-Oriented Object Notation)** e deduplica publicações localmente antes do envio à API. |
-| **`ShortKeySchemaPlugin`** | Solicita chaves JSON de 1–2 caracteres (`nm`, `tl`, `xp`, `ed`, `pb`, `sk`) na saída do LLM e expande localmente em Python (~40% menos tokens estruturais). |
-| **`LaTeXPreambleSplitPlugin`** | Em templates `.tex` customizados, separa o preâmbulo estático (`\documentclass`...`\begin{document}`) do corpo, evitando que o LLM consuma tokens lendo e reescrevendo pacotes e macros. |
-| **`SHA256DiskCachePlugin`** | Cache local por hash SHA-256 em `.cache/nvidia_token_cache.json` (custo de **0 tokens** em reexecuções idênticas). |
-
-### 💻 Guia Completo de Execução Local (`pt-BR`)
-
-Você pode executar o gerador e compilar seus currículos inteiramente na sua máquina local, com máxima velocidade, privacidade e sem necessidade de deploy prévio:
-
-#### 1. Preparação do Ambiente Local
-```powershell
-# 1. Clonar o repositório
-git clone https://github.com/Jluckmay/resume-generator.git
-cd resume-generator
-
-# 2. Criar e ativar ambiente virtual Python (recomendado)
-python -m venv venv
-# Windows:
-.\venv\Scripts\Activate.ps1
-# Linux / macOS:
-source venv/bin/activate
-
-# 3. Instalar dependências Python
-pip install -r requirements.txt
-
-# 4. Validar compilador LaTeX instalado
-python cli.py --lang pt-br --check-deps
-```
-
-#### 2. Configuração de Chaves de API (Multi-Provedor)
-Defina a chave de API do provedor desejado no terminal antes da execução (ou informe-a interativamente/via interface gráfica, sem gravação em disco):
-```powershell
-# NVIDIA NIM (Padrão para execução local com NVIDIA):
-$env:NVIDIA_API_KEY = "nvapi-sua-chave-aqui"
-
-# Google Gemini:
-$env:GEMINI_API_KEY = "AIzaSy-sua-chave-aqui"
-
-# Anthropic Claude:
-$env:ANTHROPIC_API_KEY = "sk-ant-sua-chave-aqui"
-
-# OpenAI:
-$env:OPENAI_API_KEY = "sk-sua-chave-aqui"
-
-# DeepSeek:
-$env:DEEPSEEK_API_KEY = "sk-sua-chave-aqui"
-```
-*(No Linux ou macOS, substitua `$env:NOME = "..."` por `export NOME="..."`)*
-
-#### 3. Modos de Execução Disponíveis
-
-##### Modo A: Servidor Web HTML5 Nativo (`server.py`) — Recomendado
-Inicia o servidor de compilação local com a interface web estática integrada:
-```powershell
-python server.py
-```
-- Acesse no navegador: `http://127.0.0.1:5000`
-- O servidor roda em modo de desenvolvimento local com compilação direta via `pdflatex` da sua máquina, sem latência de rede.
-- Suporta alternância dinâmica de provedores e inserção de chave de API própria com criptografia Web Crypto AES-256-GCM.
-
-##### Modo B: Interface Interativa Streamlit (`app.py`)
-Inicia a interface visual rica do Streamlit com alternância de temas claro/escuro e preview instantâneo:
-```powershell
-streamlit run app.py
-```
-- Acesse no navegador: `http://localhost:8501`
-- Possui seletor lateral de provedor (`NVIDIA`, `Google`, `Claude`, `OpenAI`, `DeepSeek`), modelos correspondentes, campo de chave segura e prévia interativa dos 9 modelos LaTeX.
-
-##### Modo C: Linha de Comando / CLI (`cli.py`)
-Geração rápida e automatizada via terminal, com suporte a seleção de provedores:
-```powershell
-# Listar todos os provedores e modelos suportados:
-python cli.py --list-providers
-
-# Exemplo 1: Currículo Padrão Google com o provedor padrão (NVIDIA NIM)
-python cli.py --lang pt-br --type profissional --template google_standard --github octocat --linkedin "https://linkedin.com/in/exemplo" --portfolio "https://jluckmay.github.io/" --output cv_google
-
-# Exemplo 2: Currículo Otimizado para IA & ATS usando Google Gemini (chave lida de $env:GEMINI_API_KEY)
-python cli.py --lang pt-br --type profissional --template ai_ats_max --provider google --github octocat --primary-color "#0F4C81" --secondary-color "#1E293B" --output cv_gemini
-
-# Exemplo 3: Currículo Acadêmico usando Anthropic Claude com chave via parâmetro seguro
-python cli.py --lang pt-br --type academic --template academic_classic --provider claude --api-key "sk-ant-..." --orcid 0000-0002-1825-0097 --lattes-file examples/sample_lattes.xml --output cv_claude
-
-# Exemplo 4: Currículo usando OpenAI informando a chave via prompt oculto no terminal
-python cli.py --lang pt-br --type profissional --template modern_pro --provider openai --github octocat --output cv_openai
-```
-
-##### Modo D: Modo Offline Sem IA (Zero-Token) & Modo de Revisão Cirúrgica
-Gere currículos instantaneamente sem gastar tokens ou utilize a IA estritamente para revisão de estilo:
-```powershell
-# 1. Geração direta 100% determinística sem IA (0 tokens) via CLI:
-python cli.py --lang pt-br --type profissional --template google_standard --github octocat --no-ai --output cv_offline
-
-# 2. Geração direta via script utilitário dedicado:
-python scripts/generate_direct_resume.py --lang pt-br --template modern_pro --github octocat --lattes-file examples/sample_lattes.xml --output cv_direto
-
-# 3. Modo apenas revisão (gera esqueleto direto e envia apenas o corpo à IA, economizando ~75% dos tokens):
-python cli.py --lang pt-br --type profissional --template ai_ats_max --github octocat --review-only --output cv_revisado
-```
-
-### 🌐 Guia de Uso da Aplicação Web Online (`https://github.com/Jluckmay/resume-generator`)
-
-A aplicação web pode ser utilizada diretamente pela nuvem através do GitHub Pages e do backend no Render:
-
-#### 1. Acesso à Aplicação Web
-- **Repositório Oficial:** [`https://github.com/Jluckmay/resume-generator`](https://github.com/Jluckmay/resume-generator)
-- **Página Web Oficial (GitHub Pages):** [`https://jluckmay.github.io/resume-generator/`](https://jluckmay.github.io/resume-generator/) (ou integrada via [`https://jluckmay.github.io/`](https://jluckmay.github.io/))
-
-#### 2. Conectando a Interface Web ao Backend no Render
-1. Abra a página web oficial no navegador.
-2. No painel de configurações (ícone de engrenagem ou rodapé), verifique o campo **URL do Backend (Render)**:
-   - O frontend conecta-se automaticamente ao servidor Render padrão através de um enclave protegido e ofuscado em runtime (ou você pode configurar a URL do seu próprio serviço no Render: `https://<seu-servico>.onrender.com` ou servidor local: `http://127.0.0.1:5000`).
-3. A interface verifica automaticamente a saúde do serviço (`/healthz`) e a disponibilidade do compilador LaTeX (`/api/status`), considerando o tempo de despertar de instâncias gratuitas no Render (~30 a 50s) com retentativas automáticas, indicador visual pulsante e retentativas transparentes na compilação, exibindo o selo verde com a versão do TeX Live.
-4. **Modo Apenas Revisão Habilitado por Padrão**: O "Modo Apenas Revisão (~75% de Economia de Tokens)" já vem ativado por padrão nas interfaces web e local, gerando primeiro o currículo determinístico via extratores e acionando o modelo de IA estritamente para refinamento e polimento textual.
-
-#### 3. Chaves de API Próprias Opcionais & Criptografia Efêmera (Zero-Storage)
-O projeto permite que os usuários utilizem a chave padrão do servidor ou utilizem **suas próprias chaves de API de forma opcional**, com suporte multi-provedor:
-- **⚡ NVIDIA NIM (Padrão do Servidor)**: utiliza a credencial do servidor seguro, sem necessidade de chave do usuário.
-- **🟢 NVIDIA NIM (Chave própria)**: `nvapi-...`
-- **🔵 Google Gemini (Chave própria)**: `AIzaSy...` (Gemini 2.0 Flash, 1.5 Pro, 1.5 Flash)
-- **🟣 Anthropic Claude (Chave própria)**: `sk-ant-...` (Claude 3.5 Sonnet, 3.5 Haiku)
-- **🟢 OpenAI (Chave própria)**: `sk-...` (GPT-4o, GPT-4o Mini, o3-mini)
-- **🔷 DeepSeek (Chave própria)**: `sk-...` (DeepSeek V3, DeepSeek R1)
-
-##### Protocolo de Proteção e Ofuscação Criptográfica:
-1. **Criptografia no Navegador (`SECKEY_V1`):** Ao inserir uma chave própria na interface web, ela é criptografada e ofuscada em tempo real via **Web Crypto API (AES-256-GCM)** com vetor de inicialização aleatório e chave efêmera derivada do timestamp (`SECKEY_V1:...`). A chave em texto plano **nunca** trafega exposta e **nunca** é gravada em `localStorage`, `sessionStorage`, cookies ou logs.
-2. **Isolamento Estrito em Memória RAM (`src/_vault.py`):** No backend e em execuções locais, o envelope criptográfico é aberto exclusivamente em memória volátil RAM em buffers `bytearray`.
-3. **Zeroização Imediata (Zero-Storage):** Após o disparo da requisição via TLS 1.3 puro com pinning de certificado, o buffer de memória é imediatamente sobrescrito com bytes nulos (`0x00`) no bloco `finally`, e as variáveis de ambiente (`NVIDIA_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`) são expurgadas com `os.environ.pop` para impedir que processos-filhos (como o `pdflatex`) tenham acesso a qualquer credencial.
-
-#### 4. Passo a Passo para Geração do Currículo
-1. **Dados Pessoais e Modo de Entrada**: Preencha nome, cargo, e-mail, telefone, localização (com link clicável para o Google Maps) e escolha entre:
-   - **Importar Informações**: informe links ou envie arquivos de perfis online (GitHub, LinkedIn, ORCID, Lattes, Portfólio Web, Foto).
-   - **Inserir Manualmente**: preencha diretamente seus dados estruturados (resumo, formação, experiência, competências, projetos, idiomas, prêmios e publicações).
-2. **Escolha do Provedor de IA e Modelo**: Selecione o provedor desejado (NVIDIA Padrão, NVIDIA Própria, Google Gemini, Anthropic Claude, OpenAI ou DeepSeek) e o modelo otimizado correspondente. Se desejar, informe sua chave própria com total segurança criptográfica.
-3. **Escolha do Modelo LaTeX**: Selecione um dos 10 templates disponíveis:
-   - **`ai_ats_max`**: Otimizado para triagem por IA (Claude/Gemini/GPT) e robôs ATS neurais (Padrão da Interface).
-   - **`google_standard`**: Padrão Google SWE (bullet points XYZ de impacto, alta densidade).
-   - **`overleaf_russell_ti`**: Modelo Russell com foto lateral, ícones e barra de habilidades.
-   - **`overleaf_awesome_cv`**: Awesome CV com cabeçalho centralizado e rodapé executivo.
-   - **`overleaf_single_page_keywords`**: Single Page + Keywords com linha de stack técnica por cargo.
-   - **`nico_krieger`**: Modelo Nico Krieger com cabeçalho escuro de largura total e barra lateral de habilidades em 5 pontos.
-   - **`modern_pro`**, **`academic_classic`**, **`tech_sidebar`**, **`minimal_ats`** ou seu próprio arquivo `.tex`.
-4. **Customização de Cores**: Escolha uma paleta executiva ou insira seus códigos HEX para a Cor Principal e Secundária.
-5. **Gerar**: Clique no botão **"Gerar Currículo"**.
-6. **Visualização e Download**: O PDF compilado é exibido diretamente no visualizador embutido da página, com opção para copiar o código LaTeX fonte ou baixar o arquivo `.pdf` gerado.
-
-#### 5. Restrição Estrita de Comunicação
-Por medidas de segurança, o backend no Render aceita conexões e compilações **exclusivamente** da origem:
-- `https://jluckmay.github.io/`
-
-Qualquer solicitação proveniente de outros sites, domínios ou scrapers é automaticamente bloqueada com status `403 Forbidden`.
+> 🌐 **Language / Idioma:** [🇺🇸 English (en-US)](#-english-en-us) | [🇧🇷 Português (pt-BR)](#-português-pt-br)
 
 ---
 
@@ -833,3 +423,427 @@ This project gratefully acknowledges and attributes the original designers and a
 | **Google Standard (SWE)** | Gayle Laakmann McDowell / Big Tech | Official SWE recruitment guidelines (Google / Cracking the Coding Interview) | Open Industry Standard |
 | **AI & ATS Max-Readability** | LaTeX Resume Core Team | Deterministic LLM parser and neural ATS layout engineering | MIT |
 | **Executive Modern / Academic / Tech / Minimalist** | LaTeX Resume Core Team | Native single and two-column corporate & academia resume layouts | MIT |
+
+### 📄 License
+
+This project is released under the [MIT License](LICENSE).
+
+Copyright (c) 2026 João Lucas Mayrinck.
+
+---
+
+## 🇧🇷 Português (`pt-BR`)
+
+Gerador automático de currículos **Acadêmicos** e **Profissionais** em **LaTeX + PDF** (nos idiomas `pt-BR` e `en-US`), alimentado por **Múltiplos Provedores de IA** (**NVIDIA NIM**, **Google Gemini**, **Anthropic Claude**, **OpenAI**, **DeepSeek**) com arquitetura modular de **Plugins de Economia de Tokens**, **Criptografia Efêmera em Navegador (AES-256-GCM)** e **Cofre de Memória Zero-Storage (Task-Bound Enclave)**.
+
+### 📋 Requisitos do Projeto
+
+Para executar o gerador e compilar os currículos em PDF, o ambiente deve atender aos seguintes requisitos obrigatórios:
+
+1. **Compilador LaTeX (`pdflatex`) — Obrigatório**:
+   - Distribuição **TeX Live** (2023 ou superior recomendado) ou **MiKTeX** instalada e disponível no `PATH` do sistema.
+   - Pacotes LaTeX utilizados pelos templates integrados (incluídos no TeX Live / MiKTeX): `babel` (`brazil` e `english`), `lmodern`, `roboto`, `sourcesanspro`, `raleway`, `fontawesome5`, `tikz`, `multicol`, `tcolorbox`, `adjustbox`, `array`, `fancyhdr`, `geometry`, `xcolor`, `graphicx`, `enumitem`, `titlesec` e `hyperref`.
+   - **Instalação rápida do compilador LaTeX**:
+     - **Windows (TeX Live ou MiKTeX via Winget)**:
+       ```powershell
+       winget install -e --id MiKTeX.MiKTeX
+       # ou TeX Live completo: https://www.tug.org/texlive/
+       ```
+     - **Linux (Ubuntu / Debian)**:
+       ```bash
+       sudo apt update && sudo apt install -y texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-lang-portuguese texlive-fonts-recommended texlive-fonts-extra
+       ```
+     - **macOS (Homebrew)**:
+       ```bash
+       brew install --cask mactex-no-gui
+       ```
+   - **Verificação do compilador**:
+     ```powershell
+     pdflatex --version
+     # ou via CLI do projeto:
+     python cli.py --lang pt-br --check-deps
+     ```
+
+2. **Python (`>= 3.10`) e Dependências Python (`requirements.txt`)**:
+   - `requests >= 2.31.0`
+   - `beautifulsoup4 >= 4.12.0`
+   - `Pillow >= 10.0.0`
+   - `streamlit >= 1.32.0`
+   - `pypdf >= 4.0.0`
+   - `flask >= 3.0.0`
+   - `cryptography >= 41.0.0`
+   - **Instalação**:
+     ```powershell
+     pip install -r requirements.txt
+     ```
+
+### Principais Recursos
+
+1. **Duas Interfaces Web Completas (HTML5 `index.html` + `server.py` e Streamlit `app.py`) com Detecção Automática de Tema e Idioma**:
+   - **Design 100% Responsivo & Mobile-First**: interfaces otimizadas para smartphones, tablets e monitores desktop com breakpoints fluidos, ajuste adaptativo de grades (`grid-template-columns`), áreas de toque acessíveis (min 44px) e visualizador de PDF redimensionável dinamicamente (`clamp()`).
+   - **Identidade Visual & Ícone Oficial**: logotipo vetorial moderno nos formatos `SVG`, `PNG` (512x512, 192x192, 32x32, 16x16) e `ICO` multi-resolução, integrado na guia do navegador (`favicon`), barra de navegação e cabeçalhos de ambas as interfaces.
+   - **Paridade Total de Recursos**: tanto a interface web HTML nativa (`index.html` servida por `python server.py`) quanto a interface Streamlit (`streamlit run app.py`) compartilham um design limpo, agradável e intuitivo com exatamente os mesmos recursos.
+   - **Detecção Automática**: detectam automaticamente na inicialização o **idioma padrão** (`navigator.language` / `Accept-Language` ou idioma do SO) e o **tema visual padrão** (`prefers-color-scheme` / registro do SO), adotando-os sem necessidade de configuração manual.
+   - **Alternância Instantânea**: incluem seletor rápido entre **☀️ Modo Claro** e **🌙 Modo Escuro** e alternância instantânea entre **Português (`pt-BR`)** e **Inglês (`en-US`)**.
+2. **Preview Visual em Tempo Real dos Modelos LaTeX e Customização de Cores**:
+   - **Preview Interativo**: exibe uma prévia visual fiel do layout do modelo LaTeX escolhido (`modern_pro`, `academic_classic`, `tech_sidebar`, `minimal_ats`, `overleaf_russell_ti`, `overleaf_awesome_cv`, `overleaf_single_page_keywords`, `nico_krieger`, `google_standard`, `ai_ats_max`) que reflete instantaneamente as cores e o idioma selecionados antes mesmo de compilar o PDF.
+   - **Paletas e Seletor de Cores (`HEX`)**: escolha entre 6 paletas executivas/acadêmicas predefinidas (*Grafite ATS (Padrão)*, *Azul Oceano*, *Azul Marinho Acadêmico*, *Verde Esmeralda Tech*, *Índigo Real*, *Bordô Clássico*) ou defina manualmente a **Cor Principal** e a **Cor Secundária** aplicadas ao código LaTeX (`\definecolor`).
+3. **Modo Duplo de Entrada de Dados: Importação Automática & Inserção Manual Estruturada**:
+   - **Alternância Flexível na Interface**: escolha facilmente entre **Importar Informações** ou **Inserir Manualmente** tanto na aplicação Web quanto no Streamlit.
+   - **Modo Importação (Perfis Online & Arquivos)**:
+     - **Google Scholar**: extrai nome do pesquisador, filiação institucional, métricas de impacto acadêmico (Total de Citações, h-index, i10-index) e lista completa de publicações com título, autores, conferência/periódico, ano e número de citações (aceita ID de usuário ou URL do perfil público).
+     - **Portfólio Pessoal (`URL`)**: extrai título, descrição, seções (`h1`/`h2`/`h3`), bio, projetos, idiomas estruturados com proficiência, premiações/menções honrosas e publicações científicas com link DOI diretamente da página web do usuário, adicionando o link clicável no cabeçalho do PDF.
+     - **GitHub**: extrai bio, localização, linguagens principais e repositórios de maior destaque via API REST pública (aceita URL completa ou username), com análise automatizada de README para extração de resumos contextuais e detecção completa de todas as ferramentas e linguagens utilizadas.
+     - **ORCID**: extrai biografia, formação (`educations`), vínculos (`employments`), bolsas/auxílios (`fundings`), distinções e artigos publicados (`works` com DOI) via API Pública v3.0 (aceita ID ou URL).
+     - **Lattes**: parser nativo para o arquivo oficial `XML`/`ZIP` exportado do CNPq (`CURRICULO-VITAE`), além de suporte a PDF, HTML, URL ou ID de 16 dígitos / texto complementar.
+     - **LinkedIn**: suporte a URL do perfil ou username, upload do PDF oficial exportado pelo LinkedIn (*Salvar como PDF*) e texto complementar.
+     - **Entrada Suplementar de Idiomas e Premiações**: campos opcionais na interface de importação para enriquecer ou complementar dados ausentes nas plataformas.
+     - **Foto de Perfil**: normalização automática de imagem (`PNG`/`JPG`/`WebP`) via Pillow para inclusão no LaTeX (`\includegraphics`).
+   - **Modo Inserção Manual (Preenchimento Direto & Cards Estruturados)**:
+     - Permite que candidatos sem perfis públicos ou que prefiram controle editorial completo insiram seus dados diretamente em formulários estruturados na interface.
+     - **Cards Dinâmicos com Botões de Adicionar/Remover**: formulários estruturados com botões `+ Adicionar` e `Remover` com campos dedicados para:
+       - **Formação Acadêmica**: Grau/Curso, Instituição de Ensino, Período e Detalhes/Ênfase/Tese.
+       - **Experiência Profissional**: Cargo/Título, Empresa/Organização, Período, Localização e Descrição/Realizações.
+       - **Projetos Relevantes**: Nome do Projeto, Tecnologias Utilizadas, Link/Repositório (URL) e Descrição.
+       - **Publicações & Artigos**: Título da Publicação, Periódico/Conferência, Ano, Autores e DOI/Link.
+       - **Prêmios & Certificações**: Título/Certificação, Ano e Instituição/Detalhes.
+     - **Modo Rápido / Texto em Lote (Expansível)**: mantém suporte opcional a sintaxe linha por linha separada por barras verticais (`|`) ou objetos JSON para colar múltiplos itens em bloco.
+     - Preserva campos opcionais de links (GitHub, Google Scholar, LinkedIn, Portfólio, ORCID, Lattes e Foto) para enriquecer o cabeçalho do currículo.
+4. **10 Modelos LaTeX Integrados (incluindo Padrão Google, Otimizado para IA & ATS, Modelo Russell, Awesome CV, Single Page + Keywords e Modelo Nico Krieger) + Suporte a Template `.tex` Customizado**:
+   - `ai_ats_max`: **Otimizado para IA & ATS (Máxima Legibilidade por LLMs & ATS Neurais)** — Desenvolvido especificamente para triagem automatizada por LLMs (Gemini, Claude, GPT) e sistemas ATS neurais (Workday, Greenhouse, Lever). Fluxo textual 100% linear em coluna única, metadados semânticos explícitos, matriz de competências e palavras-chave (Core Competencies & Keywords) dedicada para match semântico e compatibilidade Unicode nativa (`glyphtounicode`). Multi-página abrangente para máxima densidade de indexação.
+   - `google_standard`: **Padrão Google (Big Tech / Software Engineer)** — Baseado nas diretrizes de recrutamento Big Tech (Google SWE / Gayle Laakmann McDowell). Página única densa garantida (0.5 polegadas / 1.0 cm de margem), destaque em Google Blue (`#0B57D0`), estrutura XYZ de realizações ("Conquistou [X] medido por [Y], realizando [Z]"), divisórias horizontais limpas e hierarquia clássica (Empresa no topo, cargo em itálico abaixo).
+   - `overleaf_russell_ti`: **Modelo Russell (Currículo T.I.)** — Baseado no template Russell CV ([ver no Overleaf](https://www.overleaf.com/read/rgfqqnnynrmv#d5b171)). Cabeçalho com foto à esquerda, ícones FontAwesome 5, títulos com destaque nas 3 primeiras letras, tabela de skills e círculos de proficiência de idiomas em 6 níveis CEFR (A1 a C2).
+   - `overleaf_awesome_cv`: **Awesome CV (Jason Richards)** — Baseado no modelo Jason Richards Résumé ([ver no Overleaf](https://www.overleaf.com/articles/jason-richards-resume/chbxgnfyyvfc)) derivado do Awesome-CV. Tipografia Roboto + Source Sans Pro, cabeçalho centralizado, títulos com destaque colorido nas 3 primeiras letras e rodapé executivo de 3 colunas.
+   - `overleaf_single_page_keywords`: **Single Page + Keywords** — Baseado no modelo de Primož Godec e Salman Maqbool ([ver no Overleaf](https://www.overleaf.com/latex/templates/sample-single-page-resume-with-keywords/wmcxcgmtkxzk)). Página única estrita, fonte Raleway, cabeçalho em 2 colunas, ícones circulares em TikZ + FontAwesome 5, seção Summary em largura total e corpo em 2 colunas com linha de `Keywords` por cargo.
+   - `nico_krieger`: **Modelo Nico Krieger (`my-resume.cls`)** — Baseado no template de Dr. Nico Krieger ([ver no Overleaf](https://www.overleaf.com/latex/templates/my-resume/rqzfybxqvpny) e no [GitHub](https://github.com/GiantMolecularCloud/my-resume)). Cabeçalho escuro de largura total com nome, cargo/tagline e foto opcional; barra lateral destacada (`highlightbar`) para contatos, habilidades avaliadas em 5 pontos (`\skilldots`) e idiomas em 6 níveis CEFR (`\langdots`); e coluna principal para experiência, formação, projetos e publicações.
+   - `modern_pro`: Moderno Executivo (Profissional & Tech)
+   - `academic_classic`: Acadêmico Clássico (Pesquisador / CNPq / Pós-Graduação)
+   - `tech_sidebar`: Tech & Engenharia Duas Colunas (Barra Lateral) — Página única estrita com colunas balanceadas (sem página inicial em branco)
+   - `minimal_ats`: Minimalista ATS-Friendly (Alta Densidade) — Página única estrita de alta densidade
+   - **Template Customizado (`.tex`)**: envie qualquer arquivo `.tex` próprio e o modelo preencherá a estrutura mantendo o preâmbulo original.
+5. **Suporte Multi-Provedor com Chaves Próprias Opcionais e Criptografia em Navegador (Zero-Storage)**:
+   - **6 Provedores de IA Suportados**: escolha entre **NVIDIA NIM** (padrão de servidor ou chave própria), **Google Gemini**, **Anthropic Claude**, **OpenAI** e **DeepSeek**, com modelos de última geração e fallback automático.
+   - **Criptografia Efêmera no Navegador (`SECKEY_V1`)**: ao inserir uma chave própria na interface web, ela é criptografada e ofuscada em tempo real via **Web Crypto API (AES-256-GCM)** com vetor de inicialização aleatório e derivação dinâmica baseada em timestamp antes de transitar na rede.
+   - **Isolamento de Memória & Destruição Imediata (Zero-Storage)**: o backend abre o envelope criptográfico exclusivamente em buffers voláteis na RAM (`src/_vault.py`), despacha a requisição via TLS 1.3 puro e preenche a memória com bytes nulos (`0x00`) no bloco `finally`, expurgando credenciais com `os.environ.pop` para impedir que processos-filhos (como o `pdflatex`) tenham acesso a qualquer segredo.
+6. **Política Estrita de Zero-Storage para Documentos Recebidos e Gerados (Sessão Volátil em Memória)**:
+   - **Zero Retenção em Disco**: o servidor não armazena currículos gerados (`.pdf`, `.tex`), fotos de perfil enviadas, PDFs do LinkedIn ou arquivos do Lattes. Todos os dados e arquivos são processados exclusivamente na memória volátil durante a requisição ou sessão ativa.
+   - **Compilação Efêmera & Destruição Imediata (`finally`)**: a compilação LaTeX ocorre em diretório temporário efêmero isolado (`tempfile.mkdtemp`). Imediatamente após a conversão do PDF para base64/bytes em RAM, todos os arquivos temporários são sobrescritos com bytes nulos (`0x00`) e expurgados via `secure_wipe_and_remove_dir` no bloco `finally:`.
+   - **Cache de Tokens Volátil (RAM-Only)**: o cache de tokens opera em memória volátil durante a execução do processo (`in_memory_only=True`), sem gravação de currículos ou prompts em arquivos de disco no servidor.
+7. **Modo Offline Zero-Token & Modo de Revisão Cirúrgica (Economia Máxima de Tokens)**:
+   - **Geração Direta Determinística (0 Tokens)**: gere currículos completos em menos de 1 segundo sem consumir nenhuma cota ou chamada de IA (`--no-ai` no CLI, `provider="none"` no backend/HTML/Streamlit, ou via `python scripts/generate_direct_resume.py`). Os extratores mapeiam dados reais diretamente para os 10 modelos LaTeX ou template customizado com sanitização rigorosa de caracteres especiais e regras anti-alucinação.
+   - **Modo Apenas Revisão (Review-Only)**: economiza até 75% dos tokens comparado à síntese tradicional! O motor gera o esqueleto LaTeX determinístico completo e submete apenas o corpo do documento (`\begin{document}` a `\end{document}`) ao modelo de IA para polimento textual, fortalecimento de verbos de ação e validação de sintaxe, sem gastar tokens com preâmbulos ou cabeçalhos estruturais.
+
+### 📂 Estrutura de Arquivos e Diretórios
+
+O projeto segue padrões modulares da indústria, organizando código, testes, scripts, modelos e assets de forma limpa e intuitiva:
+
+```
+latex-resume/
+├── .github/
+│   └── workflows/
+│       ├── ci.yml              # CI automatizado com matriz de testes (Python 3.10, 3.11, 3.12)
+│       └── deploy-pages.yml    # Build e deploy contínuo no GitHub Pages (index.html + assets)
+├── assets/                     # Identidade visual, logotipos SVG/PNG e favicons do projeto
+│   ├── icons/                  # Ícones organizados em múltiplos formatos e resoluções
+│   │   ├── favicon.svg         # Vetor SVG de alta definição (512x512)
+│   │   ├── favicon.png         # Ícone principal PNG (512x512)
+│   │   ├── favicon-192.png     # Variante PWA / Android (192x192)
+│   │   ├── favicon-32.png      # Ícone para guias desktop (32x32)
+│   │   ├── favicon-16.png      # Ícone compacto (16x16)
+│   │   ├── apple-touch-icon.png # Ícone para iOS Safari / Apple Home Screen (180x180)
+│   │   └── favicon.ico         # Ícone multi-resolução para navegadores
+│   └── README.md               # Especificações técnicas de branding e tokens de cor
+├── examples/                   # Dados de exemplo e templates de referência
+│   ├── sample_lattes.xml       # Arquivo XML de teste padrão CNPq
+│   ├── sample_photo.png        # Foto neutra de perfil para testes
+│   ├── custom_template_example.tex # Exemplo de template .tex customizado
+│   ├── custom_template_example.pdf # PDF de referência compilado
+│   └── README.md               # Guia de utilização dos arquivos de exemplo
+├── scripts/                    # Scripts utilitários de manutenção e geração
+│   ├── generate_direct_resume.py # Gerador direto determinístico sem IA (Zero-Token)
+│   ├── generate_icons.py       # Gerador dos ícones e favicons oficiais
+│   ├── clean_artifacts.py      # Script de limpeza de resíduos temporários e caches
+│   └── README.md               # Documentação dos scripts utilitários
+├── src/                        # Pacote central da aplicação
+│   ├── _vault.py               # Enclave criptográfico em memória RAM (ENC_PAYLOAD_V1 / SECKEY_V1)
+│   ├── compiler.py             # Validação e compilação LaTeX segura com pdflatex
+│   ├── config.py               # Constantes, diretórios e configurações de provedores de IA
+│   ├── direct_builder.py       # Construtor determinístico direto (0 tokens) a partir dos extratores
+│   ├── extractors.py           # Parsers multi-fonte (GitHub, Google Scholar, ORCID, Lattes, LinkedIn, Portfólio)
+│   ├── i18n.py                 # Dicionários de internacionalização (pt-BR e en-US)
+│   ├── llm_client.py           # Cliente orquestrador multi-provedor (NVIDIA, Gemini, Claude, OpenAI, DeepSeek)
+│   ├── nvidia_client.py        # Adaptador de compatibilidade NVIDIA NIM
+│   ├── pipeline.py             # Pipeline completo de síntese e compilação
+│   ├── templates.py            # 10 modelos LaTeX integrados e suporte a templates customizados
+│   ├── token_plugins.py        # Plugins de economia de tokens (Caveman, TOON, ShortKey, Cache)
+│   ├── ui_theme.py             # Temas visuais e CSS responsivo para Streamlit
+│   ├── py.typed                # Marcador PEP 561 de tipagem estática
+│   └── README.md               # Documentação detalhada da arquitetura de módulos
+├── tests/                      # Suíte de testes automatizados com Pytest (214+ testes com 100% de aprovação)
+│   ├── conftest.py             # Configurações globais e fixtures compartilhadas do Pytest
+│   ├── test_academic_mode_and_colors.py # Testes de modo acadêmico, seções e cores personalizadas
+│   ├── test_awards_and_orcid.py# Higienização de prêmios, exclusão de bolsas redundantes e ORCID
+│   ├── test_chronological_ordering_and_deduplication.py # Ordenação cronológica e deduplicação
+│   ├── test_direct_builder.py  # Testes do modo direto offline (0 tokens) e revisão cirúrgica
+│   ├── test_encrypted_comm.py  # Criptografia ponta a ponta AES-256-GCM e blindagem anti-extração
+│   ├── test_english_standardization_and_dedup.py # Padronização em inglês e tradução consistente
+│   ├── test_experience_nouns_and_email.py # Validação de substantivos de cargo e formato de email
+│   ├── test_generation_resilience_and_ui_polish.py # Resiliência de pipeline e polimento de UI
+│   ├── test_latex_formatting.py# Formatação LaTeX, auditoria de segurança e reparo automático
+│   ├── test_manual_input_mode.py # Modo duplo de entrada (importação vs manual estruturado)
+│   ├── test_platform_display.py# Exibição elegante de handles e identificadores sociais/acadêmicos
+│   ├── test_projects_enrichment.py # Enriquecimento de stack e links de projetos
+│   ├── test_scholar_and_publications.py # Fusão inteligente de artigos entre Scholar, ORCID e Lattes
+│   ├── test_single_page_template.py # Compilação estrita em 1 página (Google, Tech Sidebar, Minimal ATS, Keywords)
+│   ├── test_ui_assets.py       # Integridade de ícones, favicons, responsividade e acessibilidade
+│   ├── test_zero_storage.py    # Garantia de Zero-Storage, sobrescrita binária 0x00 e memória volátil
+│   └── README.md               # Documentação detalhada dos 16 módulos de teste e invariantes
+├── app.py                      # Interface gráfica interativa em Streamlit
+├── server.py                   # Servidor backend de API (Flask / Gunicorn) para GitHub Pages e Render
+├── cli.py                      # Interface de linha de comando (CLI)
+├── index.html                  # Interface gráfica web nativa para GitHub Pages e servidor local
+├── pyproject.toml              # Metadados do projeto, entrypoints CLI, linters e Pytest
+├── requirements.txt            # Dependências Python para pip
+├── Dockerfile                  # Container Docker de produção com TeX Live e pdflatex
+├── render.yaml                 # Especificação de infraestrutura como código para o Render
+├── .gitignore                  # Regras estritas de exclusão de artefatos, chaves e caches
+├── .dockerignore              # Exclusões para build enxuto do container Docker
+└── README.md                   # Documentação completa em Português e Inglês
+```
+
+### 🚀 Publicação no GitHub, GitHub Pages e Backend no Render
+
+O projeto foi arquitetado para separação segura entre Frontend Estático (GitHub Pages) e Backend de Compilação (Render):
+
+```mermaid
+flowchart LR
+    A["🌐 Frontend Web Oficial<br>(https://jluckmay.github.io/latex-resume/)"] -- "1. POST /api/generate<br>(Origin: https://jluckmay.github.io<br>+ Envelope SECKEY_V1 Opcional)" --> B["🛡️ Backend no Render<br>(Docker + pdflatex + Gunicorn)"]
+    B -- "2. Síntese com Economia de Tokens<br>(TLS 1.3 + Zero-Storage Vault)" --> C["⚡ Motor de IA Multi-Provedor<br>(NVIDIA NIM / Gemini / Claude / OpenAI / DeepSeek)"]
+    C -- "3. JSON Estruturado / TOON" --> B
+    B -- "4. Compilação LaTeX Segura<br>(-no-shell-escape + openin_any=p)" --> B
+    B -- "5. PDF Compilado (Base64) + X-Backend-Attestation" --> A
+```
+
+#### 1. Hospedagem do Frontend no GitHub Pages (`https://jluckmay.github.io/latex-resume/`)
+- Ao fazer push para a branch `main`, o GitHub Actions (`.github/workflows/deploy-pages.yml`) publica automaticamente a interface web (`index.html`) no GitHub Pages.
+- O frontend aplica **Content Security Policy (CSP)** estrita e cabeçalhos de atestação de cliente (`X-Resume-Client: jluckmay-github-pages-v1`).
+
+#### 2. Criação do Backend no Render (`Dockerfile` + `render.yaml`)
+1. No painel do [Render](https://dashboard.render.com/), selecione **New +** -> **Blueprint** e conecte o repositório do GitHub (ou crie um **Web Service** selecionando runtime **Docker**).
+2. O arquivo `render.yaml` configura automaticamente o serviço web com o `Dockerfile` (que inclui TeX Live completo com `pdflatex` e pacotes tipográficos).
+3. Na aba **Environment** do serviço no Render, defina a variável de ambiente:
+   - `NVIDIA_API_KEY`: sua chave de API da NVIDIA (`nvapi-...`).
+4. O backend expõe o endpoint de monitoramento de saúde `/healthz`.
+
+#### 3. Bloqueio Estrito de Conexão Mútua (Exclusivo para `https://jluckmay.github.io/`)
+- O backend (`server.py`) rejeita **qualquer conexão** cuja origem ou `Referer` não provenha de `https://jluckmay.github.io/` (retornando `403 Forbidden`).
+- **Chamada direta a partir da página autorizada**:
+  Qualquer script hospedado em `https://jluckmay.github.io/` pode solicitar a criação de currículos diretamente via `fetch`:
+  ```javascript
+  const formData = new FormData();
+  formData.append("resume_type", "profissional"); // ou "academico"
+  formData.append("template_id", "google_standard"); // ou "ai_ats_max", "modern_pro", etc.
+  formData.append("github", "octocat");
+  formData.append("portfolio", "https://jluckmay.github.io/");
+
+  const response = await fetch("https://<seu-servico-backend>.onrender.com/api/generate", {
+    method: "POST",
+    headers: {
+      "X-Resume-Client": "jluckmay-github-pages-v1",
+      "X-Client-Timestamp": Date.now().toString()
+    },
+    body: formData
+  });
+  const data = await response.json();
+  // data.pdf_base64 contém o PDF gerado em base64
+  ```
+
+### 🔒 Auditoria de Segurança do Projeto & Correções Aplicadas
+
+| Vulnerabilidade Auditada | Risco em Produção | Correção Aplicada |
+| :--- | :--- | :--- |
+| **Exposição da Chave em Repositório Público** | Bots/scrapers ou usuários extraírem a credencial do código, documentos ou commits do GitHub. | **Política Zero-Secret no Git & Cofre Efêmero Desacoplado**: O repositório Git, commits, documentos e arquivos distribuídos contêm **zero credenciais, zero shards e zero chaves embutidas**. A chave padrão da API é configurada exclusivamente no ambiente privado do backend no Render (`NVIDIA_API_KEY`), fora do Git. Ao iniciar, o `_vault.py` purga a variável de `os.environ` imediatamente (`os.environ.pop`), valida a atestação de chamada (`src/nvidia_client.py` e `src/llm_client.py`), despacha via TLS 1.3 puro e preenche buffers voláteis na memória RAM com zeros (`0x00`) em bloco `finally:`. Os usuários finais do GitHub Pages utilizam a compilação do backend sem jamais ter acesso ou capacidade de recuperar a chave da API. Chaves próprias informadas na interface web trafegam criptografadas com Web Crypto AES-256-GCM (`SECKEY_V1`) e são igualmente destruídas em RAM após a geração. Para uso local independente, as chaves podem ser informadas pelo usuário via variáveis de ambiente, parâmetro `--api-key` ou na interface. |
+| **Execução Arbitrária de Código LaTeX (RCE)** | Primitivas `\write18` ou `\directlua` em templates customizados. | **Sanitização Prévia + Isolamento TeX**: bloqueio por regex de comandos do sistema (`\write18`, `\csname`, `\catcode`, `\input{/`). Execução do `pdflatex` com `-no-shell-escape`, ambiente de subprocesso higienizado e parâmetros Web2C `openin_any=p` e `openout_any=p` (impede leitura/escrita de arquivos fora do diretório de compilação). |
+| **SSRF (Server-Side Request Forgery)** | Usuário informar URLs de metadados AWS/GCP (`169.254.169.254`) ou rede interna (`127.0.0.1`, `10.0.0.0/8`). | **Validador de IP Público (`_safe_http_get`)**: resolução DNS com verificação `ip.is_global == True`. Bloqueio de loopback, ranges privados e link-local, além de limite de download de 1.5 MB e validação de redirecionamentos. |
+| **ZIP Bomb / XXE Bomb (Billion Laughs)** | Upload de ZIP malicioso ou XML com entidades recursivas do Lattes. | Limite estrito de descompressão (15 MB), bloqueio de declarações `<!DOCTYPE` e `<!ENTITY` antes de invocar o parser XML, e limite de 25 MP para fotos com Pillow (`Image.MAX_IMAGE_PIXELS`). |
+| **Acesso Não Autorizado ao Backend** | Terceiros usarem o backend no Render para consumir créditos da API. | **Bloqueio Estrito de Origem e Referer**: CORS restrito exclusivamente a `https://jluckmay.github.io`, validação de cabeçalhos mútuos (`X-Resume-Client`, `X-Backend-Attestation`) e Rate Limiting em memória por IP (máx. 15 gerações / 10 min). |
+| **Interceptação e Eavesdropping de Rede** | Sniffing de pacotes ou inspeção na aba Network do DevTools expondo currículos, dados pessoais ou credenciais em trânsito. | **Criptografia Bidirecional de Ponta a Ponta (`ENC_PAYLOAD_V1`)**: toda a comunicação entre o frontend (`index.html`) e o backend (`server.py`) trafega cifrada via envelope **AES-256-GCM** com vetor de inicialização aleatório e chave derivada dinamicamente por timestamp (`crypto.subtle`). Qualquer ferramenta de inspeção de rede (DevTools, Wireshark, proxies) visualiza estritamente texto cifrado (`ciphertext`), tornando ilegível e inacessível qualquer dado em trânsito. |
+| **Tentativa de Extração de Chaves via Console / Probing** | Usuários executarem scripts no Console do navegador (`window.apiKey`, `fetch('/api/status')`) ou ferramentas (curl/Postman) para recuperar a chave padrão de API do servidor. | **Blindagem de Console & Defesa Zero-Leak**: A chave padrão do servidor reside exclusivamente em memória volátil de backend (Render Enclave) e **nunca** é transmitida ao cliente em nenhuma circunstância. O endpoint `/api/status` é sanitizado expurgando qualquer nome de variável (`env_vars`). Todos os endpoints e tratadores de erro (`400`, `403`, `404`, `500`) passam pelo filtro recursivo `scrub_sensitive_api_keys`, que detecta e substitui qualquer padrão de chave ou segredo ativo por `[REDACTED_API_KEY]`. No frontend, o escopo `window` possui propriedades congeladas (`window.apiKey = undefined`), impedindo exfiltração via console. |
+
+### 🧠 Provedores de IA Suportados & Seleção de Modelos
+
+O gerador suporta múltiplos provedores de inteligência artificial de ponta, permitindo o uso da infraestrutura padrão do servidor ou chaves de API próprias fornecidas pelo usuário:
+
+| Provedor | Modelo Primário Recomendado | Modelos Alternativos / Fallbacks | Características Principais |
+| :--- | :--- | :--- | :--- |
+| **NVIDIA NIM** *(Padrão / Chave)* | `nvidia/nemotron-3.5-super-vl-120b-a12b` | `stepfun-ai/step-5-preview`, `google/gemma-4-31b-it`, `z-ai/glm-5.3` | 120B MoE (12B ativos), latência < 1.0s, suporte a `enable_thinking: False` (0 tokens ocultos). Padrão do backend. |
+| **Google Gemini** *(Chave própria)* | `gemini-2.5-flash` | `gemini-2.5-pro`, `gemini-1.5-pro`, `gemini-1.5-flash` | Altíssima velocidade, raciocínio aprimorado, conformidade estrita com schemas JSON estruturados. |
+| **Anthropic Claude** *(Chave própria)* | `claude-3-7-sonnet-20250219` | `claude-3-5-sonnet-20241022`, `claude-3-5-haiku-20241022` | Síntese de perfil executivo e acadêmico impecável, alta precisão textual e vocabulário formal polido. |
+| **OpenAI** *(Chave própria)* | `gpt-4o` | `gpt-4o-mini`, `o3-mini`, `gpt-4-turbo` | Modelo emblemático multimodal, consistência determinística em bullet points XYZ e métricas de impacto. |
+| **DeepSeek** *(Chave própria)* | `deepseek-chat` (DeepSeek V3) | `deepseek-reasoner` (DeepSeek R1) | Excelente relação custo-benefício, forte desempenho em codificação técnica e resumo curricular estruturado. |
+
+### Plugins de Economia de Tokens (`src/token_plugins.py`)
+
+| Plugin | Função e Impacto na Economia de Tokens |
+| :--- | :--- |
+| **`CavemanPromptPlugin`** | Aplica diretivas da skill `caveman` (zero preâmbulo, zero cercas markdown, instruções ultra-densas) preservando 100% da qualidade formal (`pt-BR` ou `en-US`) nos textos do currículo (~65% de redução de verbosidade). |
+| **`ThinkingSuppressionPlugin`** | Injeta `chat_template_kwargs={"enable_thinking": False}`, reduzindo o gasto com `reasoning_tokens` ocultos para **0 tokens**. |
+| **`TOONContextPrunerPlugin`** | Converte os dados brutos de GitHub, ORCID, Lattes, LinkedIn e Portfólio para **TOON (Token-Oriented Object Notation)** e deduplica publicações localmente antes do envio à API. |
+| **`ShortKeySchemaPlugin`** | Solicita chaves JSON de 1–2 caracteres (`nm`, `tl`, `xp`, `ed`, `pb`, `sk`) na saída do LLM e expande localmente em Python (~40% menos tokens estruturais). |
+| **`LaTeXPreambleSplitPlugin`** | Em templates `.tex` customizados, separa o preâmbulo estático (`\documentclass`...`\begin{document}`) do corpo, evitando que o LLM consuma tokens lendo e reescrevendo pacotes e macros. |
+| **`SHA256DiskCachePlugin`** | Cache local por hash SHA-256 em `.cache/nvidia_token_cache.json` (custo de **0 tokens** em reexecuções idênticas). |
+
+### 💻 Guia Completo de Execução Local (`pt-BR`)
+
+Você pode executar o gerador e compilar seus currículos inteiramente na sua máquina local, com máxima velocidade, privacidade e sem necessidade de deploy prévio:
+
+#### 1. Preparação do Ambiente Local
+```powershell
+# 1. Clonar o repositório
+git clone https://github.com/Jluckmay/resume-generator.git
+cd resume-generator
+
+# 2. Criar e ativar ambiente virtual Python (recomendado)
+python -m venv venv
+# Windows:
+.\venv\Scripts\Activate.ps1
+# Linux / macOS:
+source venv/bin/activate
+
+# 3. Instalar dependências Python
+pip install -r requirements.txt
+
+# 4. Validar compilador LaTeX instalado
+python cli.py --lang pt-br --check-deps
+```
+
+#### 2. Configuração de Chaves de API (Multi-Provedor)
+Defina a chave de API do provedor desejado no terminal antes da execução (ou informe-a interativamente/via interface gráfica, sem gravação em disco):
+```powershell
+# NVIDIA NIM (Padrão para execução local com NVIDIA):
+$env:NVIDIA_API_KEY = "nvapi-sua-chave-aqui"
+
+# Google Gemini:
+$env:GEMINI_API_KEY = "AIzaSy-sua-chave-aqui"
+
+# Anthropic Claude:
+$env:ANTHROPIC_API_KEY = "sk-ant-sua-chave-aqui"
+
+# OpenAI:
+$env:OPENAI_API_KEY = "sk-sua-chave-aqui"
+
+# DeepSeek:
+$env:DEEPSEEK_API_KEY = "sk-sua-chave-aqui"
+```
+*(No Linux ou macOS, substitua `$env:NOME = "..."` por `export NOME="..."`)*
+
+#### 3. Modos de Execução Disponíveis
+
+##### Modo A: Servidor Web HTML5 Nativo (`server.py`) — Recomendado
+Inicia o servidor de compilação local com a interface web estática integrada:
+```powershell
+python server.py
+```
+- Acesse no navegador: `http://127.0.0.1:5000`
+- O servidor roda em modo de desenvolvimento local com compilação direta via `pdflatex` da sua máquina, sem latência de rede.
+- Suporta alternância dinâmica de provedores e inserção de chave de API própria com criptografia Web Crypto AES-256-GCM.
+
+##### Modo B: Interface Interativa Streamlit (`app.py`)
+Inicia a interface visual rica do Streamlit com alternância de temas claro/escuro e preview instantâneo:
+```powershell
+streamlit run app.py
+```
+- Acesse no navegador: `http://localhost:8501`
+- Possui seletor lateral de provedor (`NVIDIA`, `Google`, `Claude`, `OpenAI`, `DeepSeek`), modelos correspondentes, campo de chave segura e prévia interativa dos 9 modelos LaTeX.
+
+##### Modo C: Linha de Comando / CLI (`cli.py`)
+Geração rápida e automatizada via terminal, com suporte a seleção de provedores:
+```powershell
+# Listar todos os provedores e modelos suportados:
+python cli.py --list-providers
+
+# Exemplo 1: Currículo Padrão Google com o provedor padrão (NVIDIA NIM)
+python cli.py --lang pt-br --type profissional --template google_standard --github octocat --linkedin "https://linkedin.com/in/exemplo" --portfolio "https://jluckmay.github.io/" --output cv_google
+
+# Exemplo 2: Currículo Otimizado para IA & ATS usando Google Gemini (chave lida de $env:GEMINI_API_KEY)
+python cli.py --lang pt-br --type profissional --template ai_ats_max --provider google --github octocat --primary-color "#0F4C81" --secondary-color "#1E293B" --output cv_gemini
+
+# Exemplo 3: Currículo Acadêmico usando Anthropic Claude com chave via parâmetro seguro
+python cli.py --lang pt-br --type academic --template academic_classic --provider claude --api-key "sk-ant-..." --orcid 0000-0002-1825-0097 --lattes-file examples/sample_lattes.xml --output cv_claude
+
+# Exemplo 4: Currículo usando OpenAI informando a chave via prompt oculto no terminal
+python cli.py --lang pt-br --type profissional --template modern_pro --provider openai --github octocat --output cv_openai
+```
+
+##### Modo D: Modo Offline Sem IA (Zero-Token) & Modo de Revisão Cirúrgica
+Gere currículos instantaneamente sem gastar tokens ou utilize a IA estritamente para revisão de estilo:
+```powershell
+# 1. Geração direta 100% determinística sem IA (0 tokens) via CLI:
+python cli.py --lang pt-br --type profissional --template google_standard --github octocat --no-ai --output cv_offline
+
+# 2. Geração direta via script utilitário dedicado:
+python scripts/generate_direct_resume.py --lang pt-br --template modern_pro --github octocat --lattes-file examples/sample_lattes.xml --output cv_direto
+
+# 3. Modo apenas revisão (gera esqueleto direto e envia apenas o corpo à IA, economizando ~75% dos tokens):
+python cli.py --lang pt-br --type profissional --template ai_ats_max --github octocat --review-only --output cv_revisado
+```
+
+### 🌐 Guia de Uso da Aplicação Web Online (`https://github.com/Jluckmay/resume-generator`)
+
+A aplicação web pode ser utilizada diretamente pela nuvem através do GitHub Pages e do backend no Render:
+
+#### 1. Acesso à Aplicação Web
+- **Repositório Oficial:** [`https://github.com/Jluckmay/resume-generator`](https://github.com/Jluckmay/resume-generator)
+- **Página Web Oficial (GitHub Pages):** [`https://jluckmay.github.io/resume-generator/`](https://jluckmay.github.io/resume-generator/) (ou integrada via [`https://jluckmay.github.io/`](https://jluckmay.github.io/))
+
+#### 2. Conectando a Interface Web ao Backend no Render
+1. Abra a página web oficial no navegador.
+2. No painel de configurações (ícone de engrenagem ou rodapé), verifique o campo **URL do Backend (Render)**:
+   - O frontend conecta-se automaticamente ao servidor Render padrão através de um enclave protegido e ofuscado em runtime (ou você pode configurar a URL do seu próprio serviço no Render: `https://<seu-servico>.onrender.com` ou servidor local: `http://127.0.0.1:5000`).
+3. A interface verifica automaticamente a saúde do serviço (`/healthz`) e a disponibilidade do compilador LaTeX (`/api/status`), considerando o tempo de despertar de instâncias gratuitas no Render (~30 a 50s) com retentativas automáticas, indicador visual pulsante e retentativas transparentes na compilação, exibindo o selo verde com a versão do TeX Live.
+4. **Modo Apenas Revisão Habilitado por Padrão**: O "Modo Apenas Revisão (~75% de Economia de Tokens)" já vem ativado por padrão nas interfaces web e local, gerando primeiro o currículo determinístico via extratores e acionando o modelo de IA estritamente para refinamento e polimento textual.
+
+#### 3. Chaves de API Próprias Opcionais & Criptografia Efêmera (Zero-Storage)
+O projeto permite que os usuários utilizem a chave padrão do servidor ou utilizem **suas próprias chaves de API de forma opcional**, com suporte multi-provedor:
+- **⚡ NVIDIA NIM (Padrão do Servidor)**: utiliza a credencial do servidor seguro, sem necessidade de chave do usuário.
+- **🟢 NVIDIA NIM (Chave própria)**: `nvapi-...`
+- **🔵 Google Gemini (Chave própria)**: `AIzaSy...` (Gemini 2.0 Flash, 1.5 Pro, 1.5 Flash)
+- **🟣 Anthropic Claude (Chave própria)**: `sk-ant-...` (Claude 3.5 Sonnet, 3.5 Haiku)
+- **🟢 OpenAI (Chave própria)**: `sk-...` (GPT-4o, GPT-4o Mini, o3-mini)
+- **🔷 DeepSeek (Chave própria)**: `sk-...` (DeepSeek V3, DeepSeek R1)
+
+##### Protocolo de Proteção e Ofuscação Criptográfica:
+1. **Criptografia no Navegador (`SECKEY_V1`):** Ao inserir uma chave própria na interface web, ela é criptografada e ofuscada em tempo real via **Web Crypto API (AES-256-GCM)** com vetor de inicialização aleatório e chave efêmera derivada do timestamp (`SECKEY_V1:...`). A chave em texto plano **nunca** trafega exposta e **nunca** é gravada em `localStorage`, `sessionStorage`, cookies ou logs.
+2. **Isolamento Estrito em Memória RAM (`src/_vault.py`):** No backend e em execuções locais, o envelope criptográfico é aberto exclusivamente em memória volátil RAM em buffers `bytearray`.
+3. **Zeroização Imediata (Zero-Storage):** Após o disparo da requisição via TLS 1.3 puro com pinning de certificado, o buffer de memória é imediatamente sobrescrito com bytes nulos (`0x00`) no bloco `finally`, e as variáveis de ambiente (`NVIDIA_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`) são expurgadas com `os.environ.pop` para impedir que processos-filhos (como o `pdflatex`) tenham acesso a qualquer credencial.
+
+#### 4. Passo a Passo para Geração do Currículo
+1. **Dados Pessoais e Modo de Entrada**: Preencha nome, cargo, e-mail, telefone, localização (com link clicável para o Google Maps) e escolha entre:
+   - **Importar Informações**: informe links ou envie arquivos de perfis online (GitHub, LinkedIn, ORCID, Lattes, Portfólio Web, Foto).
+   - **Inserir Manualmente**: preencha diretamente seus dados estruturados (resumo, formação, experiência, competências, projetos, idiomas, prêmios e publicações).
+2. **Escolha do Provedor de IA e Modelo**: Selecione o provedor desejado (NVIDIA Padrão, NVIDIA Própria, Google Gemini, Anthropic Claude, OpenAI ou DeepSeek) e o modelo otimizado correspondente. Se desejar, informe sua chave própria com total segurança criptográfica.
+3. **Escolha do Modelo LaTeX**: Selecione um dos 10 templates disponíveis:
+   - **`ai_ats_max`**: Otimizado para triagem por IA (Claude/Gemini/GPT) e robôs ATS neurais (Padrão da Interface).
+   - **`google_standard`**: Padrão Google SWE (bullet points XYZ de impacto, alta densidade).
+   - **`overleaf_russell_ti`**: Modelo Russell com foto lateral, ícones e barra de habilidades.
+   - **`overleaf_awesome_cv`**: Awesome CV com cabeçalho centralizado e rodapé executivo.
+   - **`overleaf_single_page_keywords`**: Single Page + Keywords com linha de stack técnica por cargo.
+   - **`nico_krieger`**: Modelo Nico Krieger com cabeçalho escuro de largura total e barra lateral de habilidades em 5 pontos.
+   - **`modern_pro`**, **`academic_classic`**, **`tech_sidebar`**, **`minimal_ats`** ou seu próprio arquivo `.tex`.
+4. **Customização de Cores**: Escolha uma paleta executiva ou insira seus códigos HEX para a Cor Principal e Secundária.
+5. **Gerar**: Clique no botão **"Gerar Currículo"**.
+6. **Visualização e Download**: O PDF compilado é exibido diretamente no visualizador embutido da página, com opção para copiar o código LaTeX fonte ou baixar o arquivo `.pdf` gerado.
+
+#### 5. Restrição Estrita de Comunicação
+Por medidas de segurança, o backend no Render aceita conexões e compilações **exclusivamente** da origem:
+- `https://jluckmay.github.io/`
+
+Qualquer solicitação proveniente de outros sites, domínios ou scrapers é automaticamente bloqueada com status `403 Forbidden`.
+
+---
+
+### 📄 Licença
+
+Este projeto é distribuído sob a [Licença MIT](LICENSE).
+
+Copyright (c) 2026 João Lucas Mayrinck.
