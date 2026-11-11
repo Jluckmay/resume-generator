@@ -1318,6 +1318,15 @@ def generate_direct_latex_resume(
     norm_lang = normalize_lang(lang)
     links = dict(raw_profile_data.get("links") or {})
 
+    # Garante que os links sociais extraídos da página de portfólio
+    # (LinkedIn, GitHub, ORCID, Lattes e Google Scholar) sejam usados
+    # no cabeçalho e não apenas coletados para extração de informações.
+    portfolio = raw_profile_data.get("portfolio") or {}
+    port_social = portfolio.get("social_links") or {}
+    for _key in ("linkedin", "github", "orcid", "scholar", "lattes"):
+        if not links.get(_key) and port_social.get(_key):
+            links[_key] = port_social[_key]
+
     # Constrói o structured_cv de forma puramente determinística
     cv = build_structured_cv_deterministically(
         raw_profile_data=raw_profile_data,

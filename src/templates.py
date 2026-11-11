@@ -131,6 +131,11 @@ BUILTIN_TEMPLATES: Dict[str, Dict[str, str]] = {
 }
 
 
+def _is_academic(resume_type: str) -> bool:
+    """Indica se o currículo tem finalidade acadêmica ('academico' ou 'academic')."""
+    return str(resume_type or "").lower().strip() in ("academico", "academic")
+
+
 def escape_latex(text: Any) -> str:
     """Escapa caracteres especiais do LaTeX preservando acentuação UTF-8."""
     if text is None:
@@ -1624,7 +1629,7 @@ def _render_sections_body(
         cv.get("languages") or [], cv.get("awards") or [], lang, max_awards=max_awards
     )
 
-    if resume_type == "academico":
+    if _is_academic(resume_type):
         ordered = [edu_block, exp_block, pub_block, proj_block, skill_block, lang_award_block]
     else:
         ordered = [exp_block, proj_block, edu_block, skill_block, pub_block, lang_award_block]
@@ -2161,7 +2166,7 @@ def _render_tech_sidebar(
         pub_lines.append(r"\end{enumerate}")
         pub_block = "\n".join(pub_lines)
 
-    if resume_type == "academico":
+    if _is_academic(resume_type):
         ordered = [exp_block, pub_block, proj_block]
     else:
         ordered = [exp_block, proj_block, pub_block]
@@ -2553,7 +2558,7 @@ def _build_acv_sections(
         aw_lines.append(r"\end{itemize}")
         award_block = _acv_sec_title_with_body(t["sec_awards"], "\n".join(aw_lines))
 
-    if resume_type == "academico":
+    if _is_academic(resume_type):
         ordered = [edu_block, exp_block, pub_block, proj_block, skill_block, award_block, lang_block]
     elif skills_first:
         # Ordem do Jason Richards' Résumé (Awesome-CV): Skills -> Education -> Experience -> Projects -> Pubs -> Languages
@@ -3061,7 +3066,7 @@ def _render_overleaf_single_page_keywords(
         lg_lbl = "LANGUAGES / INTERESTS" if is_en else "IDIOMAS"
         lg_sec = rf"\cvsec{{\faIcon{{globe}}}}{{{lg_lbl}}}" + "\n{\\small " + " $\\cdot$ ".join(escape_latex(x) for x in langs) + "}"
 
-    if resume_type == "academico":
+    if _is_academic(resume_type):
         col1_body = "\n\n".join(x for x in (edu_sec, work_sec, aw_sec) if x)
         col2_body = "\n\n".join(x for x in (pub_sec, proj_sec, sk_sec, lg_sec) if x)
     else:
@@ -3370,7 +3375,7 @@ def _render_google_standard(
     pub_block = _build_publications_block(pubs, lang, max_items=max_pubs)
     lg_aw_block = _build_languages_and_awards_block(cv.get("languages") or [], cv.get("awards") or [], lang, max_awards=max_awards)
 
-    if resume_type == "academico":
+    if _is_academic(resume_type):
         ordered = [sum_block, edu_block, pub_block, pj_block, xp_block, sk_block, lg_aw_block]
     else:
         ordered = [sum_block, xp_block, pj_block, edu_block, sk_block, pub_block, lg_aw_block]
@@ -3580,7 +3585,7 @@ def _render_ai_ats_max(
         pub_title = "PUBLICATIONS" if is_en else "PUBLICAÇÕES"
         pub_block_ai = rf"\section*{{{pub_title}}}" + "\n" + _build_publications_block(pubs, lang).replace(rf"\section*{{{t['sec_publications']}}}", "").strip()
 
-    if resume_type == "academico":
+    if _is_academic(resume_type):
         for b in (pub_block_ai, proj_block_ai):
             if b:
                 blocks.append(b)
@@ -3940,7 +3945,7 @@ def _render_nico_krieger(
             pb_lines.append(rf"\textbf{{{title_pb}}}\\[0.5pt]" + (rf"{{\small {meta_str}}}{trail}" if meta_str else trail))
         pub_sec_nico = "\n".join(pb_lines)
 
-    if resume_type == "academico":
+    if _is_academic(resume_type):
         for sec_s in (pub_sec_nico, proj_sec_nico):
             if sec_s:
                 main_sections.append(sec_s)
@@ -4236,7 +4241,7 @@ def _render_bubble(
             pub_sec_items.append(rf"\bubbleevent{{{y_pub}}}{{}}{{{t_head}}}{{{v_pub}}}{{}}")
 
     main_items: List[str] = []
-    if resume_type == "academico":
+    if _is_academic(resume_type):
         for sec_group in (edu_sec_items, exp_sec_items, pub_sec_items, proj_sec_items):
             main_items.extend(sec_group)
     else:
