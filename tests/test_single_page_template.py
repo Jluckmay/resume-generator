@@ -238,7 +238,8 @@ def test_tech_sidebar_no_blank_page_and_full_content(tmp_path):
         assert "Student Electoral Board Member" in full_text
         if resume_type == "profissional":
             assert "latex-resume" in full_text
-            assert "PDI Interativo" not in full_text
+            # Publicações também são listadas quando há espaço após todos os projetos
+            assert "PDI Interativo" in full_text
         else:
             assert "PDI Interativo" in full_text
 
@@ -281,7 +282,7 @@ def test_tech_sidebar_uses_remaining_space_for_short_projects(tmp_path):
     assert "Scientific Publications" in extracted_text
 
 
-@pytest.mark.parametrize("resume_type,expected", [("profissional", (2, 2, 0)), ("academico", (2, 0, 2))])
+@pytest.mark.parametrize("resume_type,expected", [("profissional", (2, 2, 2)), ("academico", (2, 2, 2))])
 def test_single_page_budget_keeps_fallback_out_when_primary_sections_fit(resume_type, expected):
     allocated = _allocate_single_page_budget(
         2,
@@ -337,10 +338,13 @@ def test_single_page_keywords_respects_resume_type_priorities():
         "overleaf_single_page_keywords", profile, {}, resume_type="academico", lang="en-us"
     )
 
+    # Profissional: projetos são obrigatórios; publicações listadas se houver espaço após todos os projetos
     assert "Project Alpha" in professional_tex
-    assert "Recent Publication" not in professional_tex
+    assert "Project Beta" in professional_tex
+    # Acadêmico: publicações são obrigatórias; projetos listados se houver espaço após todas as publicações
     assert "Recent Publication" in academic_tex
-    assert "Project Alpha" not in academic_tex
+    assert "Project Alpha" in academic_tex
+    assert "Project Beta" in academic_tex
 
 
 def test_tech_sidebar_uses_page_height_for_many_short_projects(tmp_path):

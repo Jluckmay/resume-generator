@@ -368,6 +368,41 @@ def extract_pub_year_sort_key(pub: Dict[str, Any]) -> Tuple[int, str]:
     return (yr_int, str(pub.get("title") or ""))
 
 
+def _pub_relevance_key(pub: Dict[str, Any]) -> Tuple[int, int]:
+    """Calculate relevance for publication sorting (citations, then year). Not displayed."""
+    citations = 0
+    c_raw = str(pub.get("citations") or "").strip()
+    if c_raw.isdigit():
+        citations = int(c_raw)
+    elif c_raw:
+        # Try to extract number from strings like "123 citations" or "Cited by 123"
+        m = re.search(r"\b(\d+)\b", c_raw)
+        if m:
+            citations = int(m.group(1))
+    yr = extract_pub_year_sort_key(pub)[0]
+    return (citations, yr)
+
+
+def _proj_relevance_key(pj: Dict[str, Any]) -> Tuple[int, int, int]:
+    """Calculate relevance for project sorting (stars, forks, then year). Not displayed."""
+    stars = 0
+    forks = 0
+    s_raw = str(pj.get("stars") or "").strip()
+    if s_raw.isdigit():
+        stars = int(s_raw)
+    f_raw = str(pj.get("forks") or "").strip()
+    if f_raw.isdigit():
+        forks = int(f_raw)
+    # Extract year from period or description if available
+    yr = 0
+    period = str(pj.get("period") or "").strip()
+    if period:
+        m = re.search(r"\b(20\d\d|19\d\d)\b", period)
+        if m:
+            yr = int(m.group(1))
+    return (stars, forks, yr)
+
+
 def extract_award_year_sort_key(aw: str) -> Tuple[int, str]:
     yrs = [int(y) for y in re.findall(r"\b(20\d\d|19\d\d)\b", str(aw))]
     return (max(yrs) if yrs else 0, str(aw))
@@ -1013,8 +1048,28 @@ def deduplicate_and_sort_publications(publications: List[Dict[str, Any]]) -> Lis
                 break
         if not found:
             merged.append(c_pub)
-    merged.sort(key=lambda p: (extract_pub_year_sort_key(p)[0], p.get("title", "")), reverse=True)
+    # Sort by relevance (citations desc), then year desc, then title asc
+    merged.sort(key=lambda p: (_pub_relevance_key(p), p.get("title", "")), reverse=True)
     return merged
+
+
+def deduplicate_and_sort_projects(projects: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Sort projects by relevance (stars, forks desc), then year desc, then name asc.
+    Relevance is used only for ordering, never displayed."""
+    if not projects:
+        return []
+    seen = set()
+    unique: List[Dict[str, Any]] = []
+    for pj in projects:
+        if not pj or not isinstance(pj, dict):
+            continue
+        name = str(pj.get("name") or "").strip().lower()
+        if name and name in seen:
+            continue
+        seen.add(name)
+        unique.append(dict(pj))
+    unique.sort(key=lambda p: (_proj_relevance_key(p), str(p.get("name") or "")), reverse=True)
+    return unique
 
 
 def are_awards_duplicate(a1: Any, a2: Any) -> bool:
@@ -1417,8 +1472,10 @@ def _allocate_single_page_budget(
 ) -> tuple[int, int, int]:
     """Distribui dinamicamente a capacidade vertical da página entre experiências, projetos e publicações.
 
-    Prioriza experiência + projetos em currículos profissionais e experiência + publicações
-    em currículos acadêmicos. A outra seção só entra quando o conteúdo principal não ocupa a página.
+    Regras de prioridade por finalidade:
+    - Profissional: projetos são obrigatórios (sempre listados); publicações só se houver espaço após todos os projetos.
+    - Acadêmico: publicações são obrigatórias (sempre listadas); projetos só se houver espaço após todas as publicações.
+    - Experiência sempre é listada quando disponível.
     """
     n_exp = 0
     n_proj = 0
@@ -1442,49 +1499,37 @@ def _allocate_single_page_budget(
             c += header_pub + item_cost("pub", u)
         return c
 
-    # Fill the purpose's core sections first and reserve the other section as fallback.
     is_academic = resume_type in ("academico", "academic")
-    if is_academic:
-        core_order, fallback_kind = ("exp", "pub"), "proj"
-    else:
-        core_order, fallback_kind = ("exp", "proj"), "pub"
+    primary_kind = "pub" if is_academic else "proj"
+    secondary_kind = "proj" if is_academic else "pub"
 
-    def add_item(kind: str) -> bool:
-        nonlocal n_exp, n_proj, n_pub
-        if kind == "exp" and n_exp < total_exp and cur_cost(n_exp + 1, n_proj, n_pub) <= budget:
-            n_exp += 1
-            return True
-        if kind == "proj" and n_proj < total_proj and cur_cost(n_exp, n_proj + 1, n_pub) <= budget:
-            n_proj += 1
-            return True
-        if kind == "pub" and n_pub < total_pubs and cur_cost(n_exp, n_proj, n_pub + 1) <= budget:
-            n_pub += 1
-            return True
-        return False
-
+    # Preenche seção prioritária e experiência em rodízio, dando prioridade à seção prioritária.
+    # Isso garante que projetos (profissional) ou publicações (acadêmico) sejam listados
+    # mesmo quando o orçamento é apertado, sem excluir completamente a experiência.
     changed = True
     while changed:
         changed = False
-        for kind in core_order:
-            changed = add_item(kind) or changed
+        # Seção prioritária primeiro (obrigatória por finalidade)
+        if primary_kind == "pub":
+            if n_pub < total_pubs and cur_cost(n_exp, n_proj, n_pub + 1) <= budget:
+                n_pub += 1
+                changed = True
+        else:
+            if n_proj < total_proj and cur_cost(n_exp, n_proj + 1, n_pub) <= budget:
+                n_proj += 1
+                changed = True
+        # Depois experiência
+        if n_exp < total_exp and cur_cost(n_exp + 1, n_proj, n_pub) <= budget:
+            n_exp += 1
+            changed = True
 
-    if allow_fallback is None:
-        core_remaining = any(
-            (kind == "exp" and n_exp < total_exp)
-            or (kind == "proj" and n_proj < total_proj)
-            or (kind == "pub" and n_pub < total_pubs)
-            for kind in core_order
-        )
-        has_primary_secondary = total_pubs > 0 if is_academic else total_proj > 0
-        allow_fallback = not has_primary_secondary or core_remaining
-        # Currículos profissionais sem experiência: permite publicações como
-        # seção de fallback mesmo quando há projetos alocados.
-        if not is_academic and n_exp == 0:
-            allow_fallback = True
-
-    if allow_fallback:
-        while add_item(fallback_kind):
-            pass
+    # Seção secundária só com espaço remanescente após prioridade + experiência
+    if secondary_kind == "pub":
+        while n_pub < total_pubs and cur_cost(n_exp, n_proj, n_pub + 1) <= budget:
+            n_pub += 1
+    else:
+        while n_proj < total_proj and cur_cost(n_exp, n_proj + 1, n_pub) <= budget:
+            n_proj += 1
 
     return n_exp, n_proj, n_pub
 
@@ -1550,19 +1595,9 @@ def _single_page_fallback_needed(
     header_proj: float = 2.5,
     header_pub: float = 2.5,
 ) -> bool:
-    """Whether the primary sections lack enough estimated content to fill one page."""
-    if resume_type in ("academico", "academic"):
-        cost = (header_exp + total_exp * weight_exp if total_exp else 0.0)
-        cost += header_pub + total_pubs * weight_pub if total_pubs else 0.0
-    else:
-        cost = (header_exp + total_exp * weight_exp if total_exp else 0.0)
-        cost += header_proj + total_proj * weight_proj if total_proj else 0.0
-    has_primary_secondary = total_pubs > 0 if resume_type in ("academico", "academic") else total_proj > 0
-    # Currículos profissionais sem experiência: permite publicações como
-    # seção de fallback mesmo quando há projetos alocados.
-    if resume_type not in ("academico", "academic") and total_exp == 0:
-        return True
-    return not has_primary_secondary or cost > budget
+    """Whether the secondary section can be included after mandatory primary section.
+    With the new mandatory-primary logic, fallback is always attempted if space allows."""
+    return True
 
 
 def _render_sections_body(
@@ -1710,10 +1745,13 @@ def _build_projects_block(
         return ""
     is_en = normalize_lang(lang).startswith("en")
     t = LATEX_I18N[normalize_lang(lang)]
-    title = t["sec_proj_acad"] if resume_type == "academico" else t["sec_proj_prof"]
+    title = t["sec_proj_acad"] if _is_academic(resume_type) else t["sec_proj_prof"]
     lines = [rf"\section*{{{title}}}"]
     lines.append(r"\begin{itemize}[leftmargin=1.2em,noitemsep,topsep=1pt,partopsep=0pt,parsep=0pt]")
-    projs = projects[:max_items] if max_items else projects
+    # Sort by relevance before limiting
+    projs = deduplicate_and_sort_projects(projects)
+    if max_items:
+        projs = projs[:max_items]
     for pj in projs:
         nm = escape_latex(pj.get("name") or "").strip()
         if not nm:
@@ -1750,7 +1788,10 @@ def _build_publications_block(
     t = LATEX_I18N[normalize_lang(lang)]
     lines = [rf"\section*{{{t['sec_publications']}}}"]
     lines.append(r"\begin{enumerate}[label=\arabic*.,leftmargin=1.5em,noitemsep,topsep=1pt,partopsep=0pt,parsep=0pt]")
-    pubs = publications[:max_items] if max_items else publications
+    # Sort by relevance before limiting
+    pubs = deduplicate_and_sort_publications(publications)
+    if max_items:
+        pubs = pubs[:max_items]
     for pb in pubs:
         raw_t = pb.get("title") or ""
         title = escape_latex(raw_t).strip()
