@@ -145,8 +145,8 @@ def apply_custom_colors_and_portfolio_to_latex(
 
     out = latex_code
 
-    # Define cor de fundo da página (pagecolor) para condizer com o tema da UI
-    text_color = "white" if _hex_luminance(p_hex) < 0.5 else "black"
+    # Todas as páginas de currículo usam fundo branco
+    text_color = "black"
 
     # Garante que xcolor esteja carregado antes de usar \pagecolor / \definecolor
     if "\\usepackage{xcolor}" not in out:
@@ -157,10 +157,10 @@ def apply_custom_colors_and_portfolio_to_latex(
             count=1,
         )
 
-    # Injeta \definecolor{pagebg} e \pagecolor logo após \usepackage{xcolor}
+    # Injeta \definecolor{pagebg} e \pagecolor (fundo branco) logo após \usepackage{xcolor}
     out = re.sub(
         r"(\\usepackage\{xcolor\})",
-        rf"\1\n\\definecolor{{pagebg}}{{HTML}}{{{p_hex}}}\n\\pagecolor{{pagebg}}",
+        rf"\1\n\\definecolor{{pagebg}}{{HTML}}{{FFFFFF}}\n\\pagecolor{{pagebg}}",
         out,
         count=1,
     )
