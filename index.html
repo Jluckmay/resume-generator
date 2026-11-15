@@ -2880,13 +2880,19 @@
             applyTranslations();
         }
 
+        let _lastDisplayThemeToggleTime = 0;
         function toggleDisplayTheme() {
+            const now = Date.now();
+            if (now - _lastDisplayThemeToggleTime < 200) return;
+            _lastDisplayThemeToggleTime = now;
             state.displayTheme = state.displayTheme === "light" ? "dark" : "light";
             try {
                 localStorage.setItem("latex_resume_display_theme", state.displayTheme);
             } catch (_) {}
             applyDisplayTheme();
         }
+        window.toggleDisplayTheme = toggleDisplayTheme;
+        window.applyDisplayTheme = applyDisplayTheme;
 
         function applyDisplayTheme() {
             const isDark = state.displayTheme === "dark";
@@ -4874,11 +4880,6 @@
             if (zOut) zOut.addEventListener("click", zoomOut);
             const zFit = document.getElementById("pdf-btn-zoom-fit");
             if (zFit) zFit.addEventListener("click", zoomFit);
-
-            const btnThemePreview = document.getElementById("preview-btn-theme");
-            if (btnThemePreview) btnThemePreview.addEventListener("click", toggleDisplayTheme);
-            const btnThemePdf = document.getElementById("pdf-btn-theme");
-            if (btnThemePdf) btnThemePdf.addEventListener("click", toggleDisplayTheme);
 
             // Redimensionamento responsivo com debounce
             let resizeTimer = null;

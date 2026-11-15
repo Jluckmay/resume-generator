@@ -482,3 +482,8 @@ def test_pdf_and_preview_display_theme_configurable_and_cached():
     # 6. Padrão acompanha o tema da página
     assert "state.displayTheme = state.theme;" in html
 
+    # 7. Prevenção de disparo duplo: sem addEventListener duplicando o onclick inline e debounce ativo
+    assert 'btnThemePreview.addEventListener("click", toggleDisplayTheme)' not in html
+    assert 'btnThemePdf.addEventListener("click", toggleDisplayTheme)' not in html
+    assert "_lastDisplayThemeToggleTime" in html
+
