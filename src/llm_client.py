@@ -21,6 +21,7 @@ from .templates import (
     deduplicate_and_sort_awards,
     deduplicate_and_sort_educations,
     deduplicate_and_sort_experiences,
+    deduplicate_and_sort_projects,
     deduplicate_and_sort_publications,
     render_builtin_template,
     sanitize_awards,
@@ -735,6 +736,7 @@ class LLMResumeGenerator:
                     sanitize_project_description(project["description"], lang=lang)
                 )
         cv["education"] = deduplicate_and_sort_educations(cv.get("education") or [], lang=lang)
+        cv["projects"] = deduplicate_and_sort_projects(cv.get("projects") or [])
         cv["publications"] = deduplicate_and_sort_publications(cv.get("publications") or [])
         for publication in cv.get("publications") or []:
             for field in ("title", "venue", "authors"):

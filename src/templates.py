@@ -368,38 +368,105 @@ def extract_pub_year_sort_key(pub: Dict[str, Any]) -> Tuple[int, str]:
     return (yr_int, str(pub.get("title") or ""))
 
 
-def _pub_relevance_key(pub: Dict[str, Any]) -> Tuple[int, int]:
-    """Calculate relevance for publication sorting (citations, then year). Not displayed."""
+def extract_qualis_score(pub: Dict[str, Any]) -> int:
+    """Extract Qualis tier score (A1 > A2 > A3 > A4 > B1 > B2 > B3 > B4 > C).
+    Relevance metric used only for sorting, never displayed."""
+    qualis_map = {
+        "A1": 90,
+        "A2": 80,
+        "A3": 70,
+        "A4": 60,
+        "B1": 50,
+        "B2": 40,
+        "B3": 30,
+        "B4": 20,
+        "C": 10,
+    }
+    raw_q = str(pub.get("qualis") or "").strip().upper()
+    if raw_q in qualis_map:
+        return qualis_map[raw_q]
+
+    combined = " ".join([
+        str(pub.get("venue") or ""),
+        str(pub.get("title") or ""),
+        str(pub.get("details") or ""),
+        str(pub.get("description") or ""),
+    ])
+    m = re.search(r"\bqualis\s*[:=-]?\s*([a-c][1-4]?)\b", combined, re.IGNORECASE)
+    if m:
+        tier = m.group(1).upper()
+        if tier in qualis_map:
+            return qualis_map[tier]
+    m2 = re.search(r"[\(\[\{]([A-C][1-4]?)[\)\]\}]", combined)
+    if m2:
+        tier = m2.group(1).upper()
+        if tier in qualis_map:
+            return qualis_map[tier]
+    return 0
+
+
+def _pub_relevance_key(pub: Dict[str, Any]) -> Tuple[int, int, int]:
+    """Calculate relevance for publication sorting (citations, qualis, then year). Not displayed."""
     citations = 0
-    c_raw = str(pub.get("citations") or "").strip()
+    c_raw = str(pub.get("citations") or pub.get("cites") or pub.get("cited_by") or "").strip()
     if c_raw.isdigit():
         citations = int(c_raw)
     elif c_raw:
-        # Try to extract number from strings like "123 citations" or "Cited by 123"
         m = re.search(r"\b(\d+)\b", c_raw)
         if m:
             citations = int(m.group(1))
+    if not citations:
+        for field in ("venue", "details", "description"):
+            val = str(pub.get(field) or "")
+            m = re.search(r"\b(\d+)\s*(?:citaç\w*|citac\w*|citations?|cites?)\b", val, re.IGNORECASE)
+            if m:
+                citations = int(m.group(1))
+                break
+    qualis_score = extract_qualis_score(pub)
     yr = extract_pub_year_sort_key(pub)[0]
-    return (citations, yr)
+    return (citations, qualis_score, yr)
 
 
 def _proj_relevance_key(pj: Dict[str, Any]) -> Tuple[int, int, int]:
-    """Calculate relevance for project sorting (stars, forks, then year). Not displayed."""
+    """Calculate relevance for project sorting (likes/stars, forks, then year). Not displayed."""
     stars = 0
     forks = 0
-    s_raw = str(pj.get("stars") or "").strip()
-    if s_raw.isdigit():
-        stars = int(s_raw)
-    f_raw = str(pj.get("forks") or "").strip()
-    if f_raw.isdigit():
-        forks = int(f_raw)
-    # Extract year from period or description if available
+    for key in ("likes", "stars", "stargazers_count", "upvotes"):
+        raw = str(pj.get(key) or "").strip()
+        if raw.isdigit():
+            stars = max(stars, int(raw))
+        elif raw:
+            m = re.search(r"\b(\d+)\b", raw)
+            if m:
+                stars = max(stars, int(m.group(1)))
+
+    for key in ("forks", "forks_count"):
+        raw = str(pj.get(key) or "").strip()
+        if raw.isdigit():
+            forks = max(forks, int(raw))
+        elif raw:
+            m = re.search(r"\b(\d+)\b", raw)
+            if m:
+                forks = max(forks, int(m.group(1)))
+
+    for field in ("description", "tech", "details"):
+        text = str(pj.get(field) or "")
+        if not stars:
+            m_s = re.search(r"\b(\d+)\s*(?:stars?|likes?|estrelas?|curtidas?)\b", text, re.IGNORECASE)
+            if m_s:
+                stars = int(m_s.group(1))
+        if not forks:
+            m_f = re.search(r"\b(\d+)\s*(?:forks?|bifurcaç\w*)\b", text, re.IGNORECASE)
+            if m_f:
+                forks = int(m_f.group(1))
+
     yr = 0
-    period = str(pj.get("period") or "").strip()
-    if period:
-        m = re.search(r"\b(20\d\d|19\d\d)\b", period)
-        if m:
-            yr = int(m.group(1))
+    for field in ("period", "year", "date", "description"):
+        val = str(pj.get(field) or "").strip()
+        if val:
+            m = re.search(r"\b(20\d\d|19\d\d)\b", val)
+            if m:
+                yr = max(yr, int(m.group(1)))
     return (stars, forks, yr)
 
 
@@ -957,6 +1024,10 @@ def clean_publication_venue(venue: str, title: str) -> str:
                 if rem:
                     v = rem
                 break
+    # Remove qualquer menção a métricas de relevância para não exibi-las no currículo
+    v = re.sub(r"[\s,\-\|]*\(?(?:qualis\s*[:=-]?\s*|qualis\b)\s*([a-c][1-4]?)\)?", "", v, flags=re.IGNORECASE).strip()
+    v = re.sub(r"[\s,\-\|]*\(?(?:\d+\s*(?:citaç\w*|citac\w*|citations?|cites?)|(?:citaç\w*|citac\w*|citations?)\s*[:=-]?\s*\d+)\)?", "", v, flags=re.IGNORECASE).strip()
+    v = re.sub(r"^[\s\.,:;\-·/–—]+|[\s\.,:;\-·/–—]+$", "", v).strip()
     return v
 
 
@@ -978,6 +1049,12 @@ def are_publications_duplicate(p1: Dict[str, Any], p2: Dict[str, Any]) -> bool:
     if t1 == t2:
         return years_match
 
+    # Se ambos possuem números explícitos e distintos nos títulos, são publicações distintas
+    nums1 = set(re.findall(r"\b\d+\b", t1))
+    nums2 = set(re.findall(r"\b\d+\b", t2))
+    if nums1 and nums2 and not (nums1 & nums2):
+        return False
+
     if (t1 in t2 or t2 in t1) and len(min(t1, t2, key=len)) >= 15:
         if years_match:
             return True
@@ -985,10 +1062,10 @@ def are_publications_duplicate(p1: Dict[str, Any], p2: Dict[str, Any]) -> bool:
     stop_words = {"de", "da", "do", "das", "dos", "em", "e", "a", "o", "as", "os", "ao", "aos", "para", "com", "por", "in", "of", "and", "the", "to", "for"}
     w1 = {w for w in t1.split() if w not in stop_words and len(w) > 2}
     w2 = {w for w in t2.split() if w not in stop_words and len(w) > 2}
-    if w1 and w2:
+    if w1 and w2 and min(len(w1), len(w2)) >= 3:
         inter = w1 & w2
         overlap_ratio = len(inter) / min(len(w1), len(w2))
-        if overlap_ratio >= 0.8 and years_match:
+        if overlap_ratio >= 0.8 and len(inter) >= 3 and years_match:
             return True
 
     return False
@@ -1030,6 +1107,11 @@ def merge_publications(target: Dict[str, Any], source: Dict[str, Any]) -> None:
     if not c_t and c_s:
         target["citations"] = c_s
 
+    q_t = str(target.get("qualis") or "").strip()
+    q_s = str(source.get("qualis") or "").strip()
+    if not q_t and q_s:
+        target["qualis"] = q_s
+
 
 def deduplicate_and_sort_publications(publications: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     if not publications:
@@ -1048,8 +1130,8 @@ def deduplicate_and_sort_publications(publications: List[Dict[str, Any]]) -> Lis
                 break
         if not found:
             merged.append(c_pub)
-    # Sort by relevance (citations desc), then year desc, then title asc
-    merged.sort(key=lambda p: (_pub_relevance_key(p), p.get("title", "")), reverse=True)
+    # Sort by relevance (citations desc, qualis desc, year desc) using stable sort
+    merged.sort(key=_pub_relevance_key, reverse=True)
     return merged
 
 
@@ -1068,7 +1150,7 @@ def deduplicate_and_sort_projects(projects: List[Dict[str, Any]]) -> List[Dict[s
             continue
         seen.add(name)
         unique.append(dict(pj))
-    unique.sort(key=lambda p: (_proj_relevance_key(p), str(p.get("name") or "")), reverse=True)
+    unique.sort(key=_proj_relevance_key, reverse=True)
     return unique
 
 
@@ -1391,6 +1473,7 @@ def render_builtin_template(
     cv_clean = dict(cv)
     cv_clean["experience"] = deduplicate_and_sort_experiences(cv_clean.get("experience") or [], lang=norm_lang)
     cv_clean["education"] = deduplicate_and_sort_educations(cv_clean.get("education") or [], lang=norm_lang)
+    cv_clean["projects"] = deduplicate_and_sort_projects(cv_clean.get("projects") or [])
     cv_clean["publications"] = deduplicate_and_sort_publications(cv_clean.get("publications") or [])
     cv_clean["awards"] = deduplicate_and_sort_awards(cv_clean.get("awards") or [], experiences=cv_clean["experience"], lang=norm_lang)
     cv = cv_clean
@@ -1499,35 +1582,34 @@ def _allocate_single_page_budget(
             c += header_pub + item_cost("pub", u)
         return c
 
-    is_academic = resume_type in ("academico", "academic")
-    primary_kind = "pub" if is_academic else "proj"
-    secondary_kind = "proj" if is_academic else "pub"
+    is_academic = _is_academic(resume_type)
 
-    # Preenche seção prioritária e experiência em rodízio, dando prioridade à seção prioritária.
-    # Isso garante que projetos (profissional) ou publicações (acadêmico) sejam listados
-    # mesmo quando o orçamento é apertado, sem excluir completamente a experiência.
-    changed = True
-    while changed:
-        changed = False
-        # Seção prioritária primeiro (obrigatória por finalidade)
-        if primary_kind == "pub":
-            if n_pub < total_pubs and cur_cost(n_exp, n_proj, n_pub + 1) <= budget:
-                n_pub += 1
-                changed = True
-        else:
-            if n_proj < total_proj and cur_cost(n_exp, n_proj + 1, n_pub) <= budget:
-                n_proj += 1
-                changed = True
-        # Depois experiência
-        if n_exp < total_exp and cur_cost(n_exp + 1, n_proj, n_pub) <= budget:
+    # 1. Garante experiências essenciais (até 2 se couberem no orçamento, ou pelo menos 1)
+    target_exp = min(2, total_exp)
+    while target_exp > 0 and cur_cost(target_exp, 0, 0) > budget:
+        target_exp -= 1
+    n_exp = target_exp
+
+    if not is_academic:
+        # Finalidade PROFISSIONAL:
+        # 2. Exibe o máximo de projetos do usuário que caibam na página
+        while n_proj < total_proj and cur_cost(n_exp, n_proj + 1, n_pub) <= budget:
+            n_proj += 1
+        # 3. Aloca experiências adicionais se houver espaço
+        while n_exp < total_exp and cur_cost(n_exp + 1, n_proj, n_pub) <= budget:
             n_exp += 1
-            changed = True
-
-    # Seção secundária só com espaço remanescente após prioridade + experiência
-    if secondary_kind == "pub":
+        # 4. Exibindo publicações APENAS se houver espaço sobrando na página
         while n_pub < total_pubs and cur_cost(n_exp, n_proj, n_pub + 1) <= budget:
             n_pub += 1
     else:
+        # Finalidade ACADÊMICA:
+        # 2. Exibe o máximo de publicações do usuário que caibam na página
+        while n_pub < total_pubs and cur_cost(n_exp, n_proj, n_pub + 1) <= budget:
+            n_pub += 1
+        # 3. Aloca experiências adicionais se houver espaço
+        while n_exp < total_exp and cur_cost(n_exp + 1, n_proj, n_pub) <= budget:
+            n_exp += 1
+        # 4. Exibindo projetos APENAS se houver espaço sobrando na página
         while n_proj < total_proj and cur_cost(n_exp, n_proj + 1, n_pub) <= budget:
             n_proj += 1
 
@@ -1642,8 +1724,8 @@ def _render_sections_body(
         )
     else:
         max_exp = None
-        max_proj = None
-        max_pubs = None
+        max_proj = 10
+        max_pubs = 10
         max_edu = None
         max_awards = None
         max_skills = None
@@ -2495,7 +2577,7 @@ def _build_acv_sections(
     # Projects block (\cventries)
     pj_entries: List[str] = []
     lbl_tech = t.get("lbl_tech_stack", "Ferramentas & Tecnologias")
-    for pj in (cv.get("projects") or []):
+    for pj in (cv.get("projects") or [])[:10]:
         nm = escape_latex(pj.get("name") or "").strip()
         if not nm:
             continue
@@ -2532,7 +2614,7 @@ def _build_acv_sections(
 
     # Publications block
     pub_block = ""
-    pubs = cv.get("publications") or []
+    pubs = (cv.get("publications") or [])[:10]
     if pubs:
         pb_lines = [r"\begin{enumerate}[label=\arabic*.,leftmargin=1.5em,itemsep=2pt,topsep=2pt]"]
         for pb in pubs:
@@ -3596,7 +3678,7 @@ def _render_ai_ats_max(
 
     # 5. Projects & 6. Publications (priorizados conforme finalidade)
     proj_block_ai = ""
-    projs = cv.get("projects") or []
+    projs = (cv.get("projects") or [])[:10]
     if projs:
         proj_title = "TECHNICAL PROJECTS" if is_en else "PROJETOS TÉCNICOS"
         pj_lines = [rf"\section*{{{proj_title}}}"]
@@ -3621,7 +3703,7 @@ def _render_ai_ats_max(
         proj_block_ai = "\n".join(pj_lines)
 
     pub_block_ai = ""
-    pubs = cv.get("publications") or []
+    pubs = (cv.get("publications") or [])[:10]
     if pubs:
         pub_title = "PUBLICATIONS" if is_en else "PUBLICAÇÕES"
         pub_block_ai = rf"\section*{{{pub_title}}}" + "\n" + _build_publications_block(pubs, lang).replace(rf"\section*{{{t['sec_publications']}}}", "").strip()

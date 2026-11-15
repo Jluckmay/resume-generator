@@ -69,6 +69,7 @@ from .templates import (
     deduplicate_and_sort_awards,
     deduplicate_and_sort_educations,
     deduplicate_and_sort_experiences,
+    deduplicate_and_sort_projects,
     deduplicate_and_sort_publications,
     merge_educations,
     merge_experiences,
@@ -209,8 +210,11 @@ def parse_manual_resume_inputs(manual_data: Dict[str, Any] | None) -> Dict[str, 
                 tech = str(item.get("tech") or "").strip()
                 url = str(item.get("url") or "").strip()
                 desc = str(item.get("description") or "").strip()
+                stars = item.get("stars", item.get("likes", 0))
+                forks = item.get("forks", 0)
+                likes = item.get("likes", item.get("stars", 0))
                 if name:
-                    proj_list.append({"name": name, "tech": tech, "url": url, "description": desc})
+                    proj_list.append({"name": name, "tech": tech, "url": url, "description": desc, "stars": stars, "forks": forks, "likes": likes})
             elif isinstance(item, str) and item.strip():
                 parts = [p.strip() for p in item.split("|")]
                 proj_list.append({
@@ -272,8 +276,15 @@ def parse_manual_resume_inputs(manual_data: Dict[str, Any] | None) -> Dict[str, 
                 yr = str(item.get("year") or "").strip()
                 authors = str(item.get("authors") or "").strip()
                 doi = str(item.get("doi") or "").strip()
+                citations = str(item.get("citations") or "").strip()
+                qualis = str(item.get("qualis") or "").strip()
                 if title:
-                    pub_list.append({"title": title, "venue": venue, "year": yr, "authors": authors, "doi": doi})
+                    entry = {"title": title, "venue": venue, "year": yr, "authors": authors, "doi": doi}
+                    if citations:
+                        entry["citations"] = citations
+                    if qualis:
+                        entry["qualis"] = qualis
+                    pub_list.append(entry)
             elif isinstance(item, str) and item.strip():
                 parts = [p.strip() for p in item.split("|")]
                 pub_list.append({
@@ -939,6 +950,9 @@ def build_structured_cv_deterministically(
                 "tech": r_tech,
                 "url": r_url,
                 "description": clean_rdesc,
+                "stars": repo.get("stars", repo.get("likes", 0)),
+                "forks": repo.get("forks", 0),
+                "likes": repo.get("likes", repo.get("stars", 0)),
             })
 
     # Prioridade B: Portfólio Projetos
@@ -954,6 +968,9 @@ def build_structured_cv_deterministically(
                 "tech": p_tech,
                 "url": p_url,
                 "description": clean_pdesc,
+                "stars": p_proj.get("stars", p_proj.get("likes", 0)),
+                "forks": p_proj.get("forks", 0),
+                "likes": p_proj.get("likes", p_proj.get("stars", 0)),
             })
 
     # Prioridade C: Lattes Projetos de Pesquisa
@@ -973,7 +990,7 @@ def build_structured_cv_deterministically(
                 "description": clean_pdesc,
             })
 
-
+    projects = deduplicate_and_sort_projects(projects)
 
     # 8. Publicações (Publications)
     publications: List[Dict[str, Any]] = []
@@ -989,6 +1006,7 @@ def build_structured_cv_deterministically(
             "authors": str(new_pub.get("authors") or "").strip(),
             "doi": str(new_pub.get("doi") or "").strip(),
             "citations": str(new_pub.get("citations") or "").strip(),
+            "qualis": str(new_pub.get("qualis") or "").strip(),
             "url": str(new_pub.get("url") or "").strip(),
         }
         for ex in publications:
@@ -1232,6 +1250,7 @@ def build_structured_cv_deterministically(
                 for b in exp["bullets"]
             ]
     education = deduplicate_and_sort_educations(education, lang=lang)
+    projects = deduplicate_and_sort_projects(projects)
     publications = deduplicate_and_sort_publications(publications)
     awards = deduplicate_and_sort_awards(awards, experiences=experience, lang=lang)
     for project in projects:

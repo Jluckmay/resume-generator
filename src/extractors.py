@@ -317,6 +317,9 @@ def sanitize_project_description(desc: str, lang: str = "pt-br") -> str:
     if not desc or not desc.strip():
         return ""
     text = remove_terminal_abbreviation_ellipsis(desc.strip())
+    # Remove qualquer menção a métricas de relevância (stars, forks, likes) para não exibi-las no currículo
+    text = re.sub(r"[\s,\-\|]*\(?(?:stars?|forks?|likes?)\s*[:=-]?\s*\d+\)?", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"[\s,\-\|]*\(?\d+\s*(?:stars?|forks?|likes?)\)?", "", text, flags=re.IGNORECASE)
     text = finalize_project_description(text)
     is_en = str(lang).lower().startswith("en")
 
@@ -810,6 +813,8 @@ def extract_github(github_input: str, target_lang: str = "pt-br") -> Dict[str, A
                     "language": lang,
                     "tech": tech,
                     "stars": repo.get("stargazers_count") or 0,
+                    "likes": repo.get("stargazers_count") or 0,
+                    "forks": repo.get("forks_count") or repo.get("forks") or 0,
                     "url": repo.get("html_url") or "",
                     "topics": topics,
                 }

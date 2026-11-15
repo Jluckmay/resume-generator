@@ -2427,6 +2427,9 @@
                     <textarea id="inp-struct-proj-desc-${id}" class="form-control struct-field" rows="2" placeholder="${isEn ? 'e.g. Zero-storage encrypted resume synthesis platform.' : 'ex: Plataforma zero-storage de síntese de currículos.'}" oninput="onStructuredInputChanged()" autocomplete="off" data-lpignore="true" aria-label="${isEn ? 'Project Description' : 'Descrição do Projeto'}">${escapeHtml(data.description || '')}</textarea>
                 </div>
             `;
+            if (data.stars) card.dataset.stars = data.stars;
+            if (data.forks) card.dataset.forks = data.forks;
+            if (data.likes) card.dataset.likes = data.likes;
             list.appendChild(card);
             updateStructuredCardBadges("list-struct-projects", isEn ? "Project" : "Projeto");
             announceStructuredChange("project", count, true);
@@ -2483,6 +2486,8 @@
                     </div>
                 </div>
             `;
+            if (data.citations) card.dataset.citations = data.citations;
+            if (data.qualis) card.dataset.qualis = data.qualis;
             list.appendChild(card);
             updateStructuredCardBadges("list-struct-publications", isEn ? "Publication" : "Publicação");
             announceStructuredChange("publication", count, true);
@@ -2599,7 +2604,11 @@
                 const url = card.querySelector("[id^='inp-struct-proj-url-']")?.value.trim() || "";
                 const desc = card.querySelector("[id^='inp-struct-proj-desc-']")?.value.trim() || "";
                 if (name) {
-                    items.push({ name, tech, url, description: desc });
+                    const item = { name, tech, url, description: desc };
+                    if (card.dataset.stars) item.stars = card.dataset.stars;
+                    if (card.dataset.forks) item.forks = card.dataset.forks;
+                    if (card.dataset.likes) item.likes = card.dataset.likes;
+                    items.push(item);
                 }
             });
             return items;
@@ -2616,7 +2625,10 @@
                 const authors = card.querySelector("[id^='inp-struct-pub-auth-']")?.value.trim() || "";
                 const doi = card.querySelector("[id^='inp-struct-pub-doi-']")?.value.trim() || "";
                 if (title) {
-                    items.push({ title, venue, year, authors, doi });
+                    const item = { title, venue, year, authors, doi };
+                    if (card.dataset.citations) item.citations = card.dataset.citations;
+                    if (card.dataset.qualis) item.qualis = card.dataset.qualis;
+                    items.push(item);
                 }
             });
             return items;
