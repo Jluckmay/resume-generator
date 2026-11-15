@@ -33,7 +33,8 @@
                        s.indexOf("ERR_FAILED") !== -1 ||
                        s.indexOf("ERR_CONNECTION_CLOSED") !== -1 ||
                        s.indexOf("invalid/:1") !== -1 ||
-                       s.indexOf("invalid") !== -1;
+                       s.indexOf("invalid") !== -1 ||
+                       s.indexOf("callApi") !== -1;
             }
 
             // Intercepta rejeições de promessas de scripts de conteúdo de extensões

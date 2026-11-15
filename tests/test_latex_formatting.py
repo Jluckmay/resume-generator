@@ -166,7 +166,7 @@ def test_index_html_autofill_and_extension_error_suppression():
     assert "FN_NOT_FOUND" in html_content
 
     assert "closePasskeyConditionalList" in html_content
-
+    assert "callApi" in html_content
     assert "isExtensionNoise" in html_content
 
     assert "data-lpignore" in html_content
