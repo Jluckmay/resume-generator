@@ -444,3 +444,41 @@ def test_pdf_viewer_continuous_scroll_and_wheel_page_switching():
 
     # app.py: parâmetros para visualizador nativo permitir scroll contínuo entre páginas
     assert "#toolbar=1&navpanes=0&scrollbar=1&page=1&view=FitH" in app_py
+
+
+def test_pdf_and_preview_display_theme_configurable_and_cached():
+    """Valida se o tema de exibição (claro/escuro) do PDF e do Preview é configurável, sincronizado e salvo em cache."""
+    from pathlib import Path
+
+    html = Path("index.html").read_text(encoding="utf-8")
+
+    # 1. Botões de alternância de tema no Preview e na Barra de Ferramentas do PDF
+    assert 'id="preview-btn-theme"' in html
+    assert 'id="pdf-btn-theme"' in html
+    assert 'onclick="toggleDisplayTheme()"' in html
+
+    # 2. Classes CSS de tema de exibição claro/escuro
+    assert "#pdf-canvas-container.theme-light" in html
+    assert "#pdf-canvas-container.theme-dark" in html
+    assert "#live-preview-box.theme-light" in html
+    assert "#live-preview-box.theme-dark" in html
+    assert "filter: invert(0.92) hue-rotate(180deg);" in html
+
+    # 3. Preservação de imagens/avatares no tema escuro do preview (re-inversão)
+    assert "#live-preview-box.theme-dark img" in html
+    assert "filter: invert(1) hue-rotate(180deg);" in html
+
+    # 4. Estado de exibição e funções de alternância
+    assert 'displayTheme: "light"' in html
+    assert "function toggleDisplayTheme()" in html
+    assert "function applyDisplayTheme()" in html
+
+    # 5. Persistência em cache (localStorage) para tema de página e tema de exibição
+    assert 'localStorage.getItem("latex_resume_page_theme")' in html
+    assert 'localStorage.getItem("latex_resume_display_theme")' in html
+    assert 'localStorage.setItem("latex_resume_page_theme"' in html
+    assert 'localStorage.setItem("latex_resume_display_theme"' in html
+
+    # 6. Padrão acompanha o tema da página
+    assert "state.displayTheme = state.theme;" in html
+

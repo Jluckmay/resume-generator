@@ -1057,6 +1057,59 @@
             height: clamp(420px, 68vh, 720px);
             border: none;
             background: #fff;
+            transition: filter 0.2s ease;
+        }
+
+        /* Temas de Exibição do PDF e do Preview (Claro / Escuro) */
+        #pdf-canvas-container.theme-light {
+            background: #e5e7eb;
+            transition: background 0.2s ease;
+        }
+        #pdf-canvas-container.theme-light .pdf-page-canvas,
+        #pdf-canvas-container.theme-light #pdf-canvas {
+            filter: none;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.15);
+            transition: filter 0.2s ease, box-shadow 0.2s ease;
+        }
+        #pdf-canvas-container.theme-light .pdf-page-badge {
+            color: #4b5563;
+        }
+
+        #pdf-canvas-container.theme-dark {
+            background: #18181b;
+            transition: background 0.2s ease;
+        }
+        #pdf-canvas-container.theme-dark .pdf-page-canvas,
+        #pdf-canvas-container.theme-dark #pdf-canvas {
+            filter: invert(0.92) hue-rotate(180deg);
+            box-shadow: 0 6px 22px rgba(0,0,0,0.65);
+            transition: filter 0.2s ease, box-shadow 0.2s ease;
+        }
+        #pdf-canvas-container.theme-dark .pdf-page-badge {
+            color: #9ca3af;
+        }
+
+        #pdf-iframe.theme-light {
+            filter: none;
+            background: #ffffff;
+        }
+        #pdf-iframe.theme-dark {
+            filter: invert(0.92) hue-rotate(180deg);
+            background: #18181b;
+        }
+
+        #live-preview-box {
+            transition: filter 0.2s ease;
+            border-radius: 10px;
+        }
+        #live-preview-box.theme-light {
+            filter: none;
+        }
+        #live-preview-box.theme-dark {
+            filter: invert(0.92) hue-rotate(180deg);
+        }
+        #live-preview-box.theme-dark img {
+            filter: invert(1) hue-rotate(180deg);
         }
 
         /* Responsive Media Queries */
@@ -1739,7 +1792,10 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title" id="ui-preview-title" role="heading" aria-level="2">👁️ Preview em Tempo Real do Modelo LaTeX & Cores</div>
-                    <span class="pill-badge" id="preview-tpl-badge">ai_ats_max</span>
+                    <div style="display:flex;align-items:center;gap:0.4rem;">
+                        <button type="button" id="preview-btn-theme" class="btn-toggle" style="padding:0.2rem 0.55rem;font-size:0.75rem;" onclick="toggleDisplayTheme()" aria-label="Alternar tema de exibição do preview e PDF">☀️ Claro</button>
+                        <span class="pill-badge" id="preview-tpl-badge">ai_ats_max</span>
+                    </div>
                 </div>
                 <div id="live-preview-box"></div>
             </div>
@@ -1798,7 +1854,8 @@
                                 <button type="button" id="pdf-btn-zoom-in" class="btn-toggle" style="padding:0.25rem 0.55rem;" title="Aumentar Zoom" aria-label="Aumentar Zoom">+</button>
                                 <button type="button" id="pdf-btn-zoom-fit" class="btn-toggle" style="padding:0.25rem 0.55rem;" title="Ajustar à Tela" aria-label="Ajustar à Tela">Ajustar</button>
                             </div>
-                            <div>
+                            <div style="display:flex;align-items:center;gap:0.35rem;">
+                                <button type="button" id="pdf-btn-theme" class="btn-toggle" style="padding:0.25rem 0.55rem;font-size:0.8rem;" onclick="toggleDisplayTheme()" title="Alternar tema de exibição do PDF e preview (Claro / Escuro)" aria-label="Alternar tema de exibição">☀️ Claro</button>
                                 <a id="pdf-tab-link" href="#" target="_blank" class="btn-toggle" style="text-decoration:none;padding:0.25rem 0.6rem;font-size:0.8rem;" title="Abrir PDF em nova aba">↗️ Nova Aba</a>
                             </div>
                         </div>
@@ -2181,6 +2238,7 @@
             uiLang: "pt-br",
             pdfLang: "pt-br",
             theme: "light",
+            displayTheme: "light",
             resumeType: "profissional",
             templateSource: "builtin",
             templateId: "ai_ats_max",
@@ -2701,10 +2759,28 @@
                         updateResumeLangButton();
                                     updateLangSwitchButton();
 
-                        // 2. Auto-detect default theme (Light vs Dark) from OS/Browser media query
-            const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-            state.theme = prefersDark ? "dark" : "light";
+                        // 2. Auto-detect default theme (Light vs Dark) from cache or OS/Browser media query
+            let storedPageTheme = null;
+            let storedDisplayTheme = null;
+            try {
+                storedPageTheme = localStorage.getItem("latex_resume_page_theme");
+                storedDisplayTheme = localStorage.getItem("latex_resume_display_theme");
+            } catch (_) {}
+
+            if (storedPageTheme === "light" || storedPageTheme === "dark") {
+                state.theme = storedPageTheme;
+            } else {
+                const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+                state.theme = prefersDark ? "dark" : "light";
+            }
             document.documentElement.setAttribute("data-theme", state.theme);
+
+            if (storedDisplayTheme === "light" || storedDisplayTheme === "dark") {
+                state.displayTheme = storedDisplayTheme;
+            } else {
+                state.displayTheme = state.theme;
+            }
+            applyDisplayTheme();
 
             applyTranslations();
             initStructuredManualInputs();
@@ -2782,9 +2858,72 @@
         }
 
         function toggleTheme() {
+            const wasInSync = state.displayTheme === state.theme;
             state.theme = state.theme === "light" ? "dark" : "light";
             document.documentElement.setAttribute("data-theme", state.theme);
+            try {
+                localStorage.setItem("latex_resume_page_theme", state.theme);
+            } catch (_) {}
+
+            let hasCustomDisplayTheme = false;
+            try {
+                hasCustomDisplayTheme = !!localStorage.getItem("latex_resume_display_theme");
+            } catch (_) {}
+
+            if (wasInSync || !hasCustomDisplayTheme) {
+                state.displayTheme = state.theme;
+                try {
+                    localStorage.setItem("latex_resume_display_theme", state.displayTheme);
+                } catch (_) {}
+                applyDisplayTheme();
+            }
             applyTranslations();
+        }
+
+        function toggleDisplayTheme() {
+            state.displayTheme = state.displayTheme === "light" ? "dark" : "light";
+            try {
+                localStorage.setItem("latex_resume_display_theme", state.displayTheme);
+            } catch (_) {}
+            applyDisplayTheme();
+        }
+
+        function applyDisplayTheme() {
+            const isDark = state.displayTheme === "dark";
+            const liveBox = document.getElementById("live-preview-box");
+            if (liveBox) {
+                liveBox.classList.toggle("theme-dark", isDark);
+                liveBox.classList.toggle("theme-light", !isDark);
+            }
+            const pdfContainer = document.getElementById("pdf-canvas-container");
+            if (pdfContainer) {
+                pdfContainer.classList.toggle("theme-dark", isDark);
+                pdfContainer.classList.toggle("theme-light", !isDark);
+            }
+            const pdfIframe = document.getElementById("pdf-iframe");
+            if (pdfIframe) {
+                pdfIframe.classList.toggle("theme-dark", isDark);
+                pdfIframe.classList.toggle("theme-light", !isDark);
+            }
+
+            const isEn = state.uiLang === "en-us";
+            const btnText = isDark ? (isEn ? "🌙 Dark" : "🌙 Escuro") : (isEn ? "☀️ Light" : "☀️ Claro");
+            const btnTitle = isDark
+                ? (isEn ? "Display theme: Dark (Click to switch to Light)" : "Tema de exibição: Escuro (Clique para alternar para Claro)")
+                : (isEn ? "Display theme: Light (Click to switch to Dark)" : "Tema de exibição: Claro (Clique para alternar para Escuro)");
+
+            const btnPreview = document.getElementById("preview-btn-theme");
+            if (btnPreview) {
+                btnPreview.textContent = btnText;
+                btnPreview.title = btnTitle;
+                btnPreview.setAttribute("aria-pressed", isDark ? "true" : "false");
+            }
+            const btnPdf = document.getElementById("pdf-btn-theme");
+            if (btnPdf) {
+                btnPdf.textContent = btnText;
+                btnPdf.title = btnTitle;
+                btnPdf.setAttribute("aria-pressed", isDark ? "true" : "false");
+            }
         }
 
         function applyTranslations() {
@@ -2942,6 +3081,7 @@
                 });
             }
 
+            applyDisplayTheme();
             onProviderChange();
         }
 
@@ -4392,6 +4532,7 @@
                                 if (ifr) ifr.style.display = "none";
 
                                 renderAllPdfPages();
+                                applyDisplayTheme();
                             }).catch(function(err) {
                                 console.warn("PDF.js load error, falling back to iframe:", err);
                                 fallbackToIframe();
@@ -4423,6 +4564,7 @@
                             newIframe.setAttribute("title", "PDF Preview");
                             newIframe.src = state.activePdfBlobUrl + "#toolbar=1&navpanes=0&scrollbar=1&page=1&view=FitH";
                             oldIframe.parentNode.replaceChild(newIframe, oldIframe);
+                            applyDisplayTheme();
                         }
                     }
                 }
@@ -4732,6 +4874,11 @@
             if (zOut) zOut.addEventListener("click", zoomOut);
             const zFit = document.getElementById("pdf-btn-zoom-fit");
             if (zFit) zFit.addEventListener("click", zoomFit);
+
+            const btnThemePreview = document.getElementById("preview-btn-theme");
+            if (btnThemePreview) btnThemePreview.addEventListener("click", toggleDisplayTheme);
+            const btnThemePdf = document.getElementById("pdf-btn-theme");
+            if (btnThemePdf) btnThemePdf.addEventListener("click", toggleDisplayTheme);
 
             // Redimensionamento responsivo com debounce
             let resizeTimer = null;
