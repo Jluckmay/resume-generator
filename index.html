@@ -2239,6 +2239,7 @@
             pdfLang: "pt-br",
             theme: "light",
             displayTheme: "light",
+            pdfThemePreference: "auto",
             resumeType: "profissional",
             templateSource: "builtin",
             templateId: "ai_ats_max",
@@ -2761,10 +2762,10 @@
 
                         // 2. Auto-detect default theme (Light vs Dark) from cache or OS/Browser media query
             let storedPageTheme = null;
-            let storedDisplayTheme = null;
+            let storedPdfThemePref = null;
             try {
                 storedPageTheme = localStorage.getItem("latex_resume_page_theme");
-                storedDisplayTheme = localStorage.getItem("latex_resume_display_theme");
+                storedPdfThemePref = localStorage.getItem("latex_resume_pdf_theme_pref") || localStorage.getItem("latex_resume_display_theme");
             } catch (_) {}
 
             if (storedPageTheme === "light" || storedPageTheme === "dark") {
@@ -2775,11 +2776,19 @@
             }
             document.documentElement.setAttribute("data-theme", state.theme);
 
-            if (storedDisplayTheme === "light" || storedDisplayTheme === "dark") {
-                state.displayTheme = storedDisplayTheme;
+            if (storedPdfThemePref === "light" || storedPdfThemePref === "dark") {
+                state.pdfThemePreference = storedPdfThemePref;
             } else {
-                state.displayTheme = state.theme;
+                state.pdfThemePreference = state.theme;
             }
+
+            // Regra: Quando o tema da página for claro, o de exibição também deve ser claro
+            if (state.theme === "light") {
+                state.displayTheme = "light";
+            } else {
+                state.displayTheme = state.pdfThemePreference === "light" ? "light" : "dark";
+            }
+            state.displayTheme = state.displayTheme || state.theme;
             applyDisplayTheme();
 
             applyTranslations();
@@ -2858,25 +2867,28 @@
         }
 
         function toggleTheme() {
-            const wasInSync = state.displayTheme === state.theme;
             state.theme = state.theme === "light" ? "dark" : "light";
             document.documentElement.setAttribute("data-theme", state.theme);
             try {
                 localStorage.setItem("latex_resume_page_theme", state.theme);
             } catch (_) {}
 
-            let hasCustomDisplayTheme = false;
-            try {
-                hasCustomDisplayTheme = !!localStorage.getItem("latex_resume_display_theme");
-            } catch (_) {}
-
-            if (wasInSync || !hasCustomDisplayTheme) {
-                state.displayTheme = state.theme;
-                try {
-                    localStorage.setItem("latex_resume_display_theme", state.displayTheme);
-                } catch (_) {}
-                applyDisplayTheme();
+            // Regra: Quando o tema da página for claro, o de exibição também deve ser claro
+            if (state.theme === "light") {
+                state.displayTheme = "light";
+            } else {
+                // Se o usuário configurou como claro, mantém-se claro independente do tema da página.
+                // Se o usuário configurou como escuro (ou padrão), muda para escuro de acordo com o tema da página.
+                let pref = state.pdfThemePreference;
+                if (!pref || pref === "auto") {
+                    try { pref = localStorage.getItem("latex_resume_pdf_theme_pref"); } catch (_) {}
+                }
+                state.displayTheme = pref === "light" ? "light" : "dark";
             }
+            try {
+                localStorage.setItem("latex_resume_display_theme", state.displayTheme);
+            } catch (_) {}
+            applyDisplayTheme();
             applyTranslations();
         }
 
@@ -2885,11 +2897,39 @@
             const now = Date.now();
             if (now - _lastDisplayThemeToggleTime < 200) return;
             _lastDisplayThemeToggleTime = now;
-            state.displayTheme = state.displayTheme === "light" ? "dark" : "light";
-            try {
-                localStorage.setItem("latex_resume_display_theme", state.displayTheme);
-            } catch (_) {}
-            applyDisplayTheme();
+
+            if (state.theme === "light") {
+                // Página está clara -> de exibição estava claro.
+                // Ao clicar para alternar o tema de exibição para escuro:
+                // Como "quando o tema da página for claro, o de exibição também deve ser claro",
+                // para exibir o PDF no modo escuro a página também deve transicionar para escuro.
+                state.theme = "dark";
+                state.pdfThemePreference = "dark";
+                state.displayTheme = "dark";
+                document.documentElement.setAttribute("data-theme", "dark");
+                try {
+                    localStorage.setItem("latex_resume_page_theme", "dark");
+                    localStorage.setItem("latex_resume_pdf_theme_pref", "dark");
+                    localStorage.setItem("latex_resume_display_theme", "dark");
+                } catch (_) {}
+                applyTranslations();
+            } else {
+                // Página está escura.
+                // Se estava escuro -> usuário configura como claro (mantém-se claro independente da página).
+                // Se estava claro -> usuário configura como escuro (muda de acordo com a página).
+                if (state.displayTheme === "dark") {
+                    state.pdfThemePreference = "light";
+                    state.displayTheme = "light";
+                } else {
+                    state.pdfThemePreference = "dark";
+                    state.displayTheme = "dark";
+                }
+                try {
+                    localStorage.setItem("latex_resume_pdf_theme_pref", state.pdfThemePreference);
+                    localStorage.setItem("latex_resume_display_theme", state.displayTheme);
+                } catch (_) {}
+                applyDisplayTheme();
+            }
         }
         window.toggleDisplayTheme = toggleDisplayTheme;
         window.applyDisplayTheme = applyDisplayTheme;

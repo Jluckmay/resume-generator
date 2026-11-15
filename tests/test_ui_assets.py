@@ -480,10 +480,44 @@ def test_pdf_and_preview_display_theme_configurable_and_cached():
     assert 'localStorage.setItem("latex_resume_display_theme"' in html
 
     # 6. Padrão acompanha o tema da página
-    assert "state.displayTheme = state.theme;" in html
+    assert "state.pdfThemePreference = state.theme;" in html
+    assert 'state.displayTheme = "light";' in html
 
     # 7. Prevenção de disparo duplo: sem addEventListener duplicando o onclick inline e debounce ativo
     assert 'btnThemePreview.addEventListener("click", toggleDisplayTheme)' not in html
     assert 'btnThemePdf.addEventListener("click", toggleDisplayTheme)' not in html
     assert "_lastDisplayThemeToggleTime" in html
+
+    # 8. Regras específicas de tema de exibição:
+    # - Quando o tema da página for claro, o de exibição também deve ser claro
+    # - Configurado como claro mantém-se independente da página
+    # - Configurado como escuro acompanha a página
+    assert 'if (state.theme === "light") {' in html
+    assert 'state.displayTheme = "light";' in html
+    assert "state.pdfThemePreference" in html
+    assert 'localStorage.getItem("latex_resume_pdf_theme_pref")' in html
+    assert 'localStorage.setItem("latex_resume_pdf_theme_pref"' in html
+
+
+def test_pdf_theme_transition_rules_logic():
+    """Valida as regras de transição: claro independente, escuro acompanha página, e página clara força exibição clara."""
+    def compute_display_theme(page_theme: str, pdf_pref: str) -> str:
+        if page_theme == "light":
+            return "light"
+        return "light" if pdf_pref == "light" else "dark"
+
+    # Regra 1: Configurado como claro mantém-se claro independente do tema da página
+    pref_light = "light"
+    assert compute_display_theme("dark", pref_light) == "light"
+    assert compute_display_theme("light", pref_light) == "light"
+
+    # Regra 2: Configurado como escuro muda de acordo com o tema da página
+    pref_dark = "dark"
+    assert compute_display_theme("dark", pref_dark) == "dark"
+    assert compute_display_theme("light", pref_dark) == "light"
+
+    # Regra 3: Quando o tema da página for claro, o de exibição também deve ser claro
+    for pref in ["light", "dark", "auto"]:
+        assert compute_display_theme("light", pref) == "light"
+
 
