@@ -30,6 +30,26 @@ PROVIDERS_CONFIG: Dict[str, Dict[str, Any]] = {
                 "tier": "primary",
                 "description": "Equilíbrio entre inteligência (120B), velocidade e 0 tokens de raciocínio ocultos.",
             },
+            {
+                "id": "stepfun-ai/step-5-preview",
+                "name": "StepFun Step-5 Preview (Alta Velocidade)",
+                "description": "Excelente velocidade e síntese concisa.",
+            },
+            {
+                "id": "google/gemma-4-31b-it",
+                "name": "Google Gemma 4 31B Instruct (Econômico)",
+                "description": "Modelo de código aberto altamente eficiente.",
+            },
+            {
+                "id": "z-ai/glm-5.3-flash",
+                "name": "Z-AI GLM 5.3 Flash (Raciocínio Avançado)",
+                "description": "Raciocínio avançado para estruturação de dados.",
+            },
+            {
+                "id": "mistralai/mistral-large-4-1t-a52b",
+                "name": "Mistral Large 4 1T (A52B MoE)",
+                "description": "MoE de alta capacidade para currículos extensos.",
+            },
         ],
     },
     "nvidia": {
@@ -49,6 +69,26 @@ PROVIDERS_CONFIG: Dict[str, Dict[str, Any]] = {
                 "id": "nvidia/nemotron-3.5-super-vl-120b-a12b",
                 "name": "NVIDIA Nemotron 3.5 Super VL 120B — Recomendado",
                 "description": "MoE 120B otimizado para JSON e código LaTeX.",
+            },
+            {
+                "id": "stepfun-ai/step-5-preview",
+                "name": "StepFun Step-5 Preview",
+                "description": "Alta velocidade e precisão de formato.",
+            },
+            {
+                "id": "google/gemma-4-31b-it",
+                "name": "Google Gemma 4 31B Instruct",
+                "description": "Modelo de código aberto altamente eficiente.",
+            },
+            {
+                "id": "z-ai/glm-5.3-flash",
+                "name": "Z-AI GLM 5.3 Flash",
+                "description": "Raciocínio avançado.",
+            },
+            {
+                "id": "mistralai/mistral-large-4-1t-a52b",
+                "name": "Mistral Large 4 1T (A52B MoE)",
+                "description": "MoE de alta capacidade para currículos extensos.",
             },
         ],
     },

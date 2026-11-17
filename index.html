@@ -1366,7 +1366,7 @@
             <div class="form-group">
                 <label for="inp-api-key" id="ui-api-key-lbl">Chave de API do Provedor (Opcional)</label>
                 <div style="position:relative;display:flex;align-items:center;">
-                    <input type="text" id="inp-api-key" class="form-control masked-key" style="padding-right:2.4rem;" placeholder="Padrão seguro do servidor ativo" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" spellcheck="false" autocorrect="off" autocapitalize="off" aria-autocomplete="none" aria-label="Chave de API do Provedor (Opcional)">
+                    <input type="text" id="inp-api-key" class="form-control masked-key" style="padding-right:2.4rem;" placeholder="Padrão seguro do servidor ativo" onchange="onApiKeyChanged()" onblur="onApiKeyChanged()" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" spellcheck="false" autocorrect="off" autocapitalize="off" aria-autocomplete="none" aria-label="Chave de API do Provedor (Opcional)">
                     <button type="button" id="btn-toggle-key" onclick="toggleKeyVisibility()" style="position:absolute;right:8px;background:none;border:none;cursor:pointer;font-size:0.95rem;color:var(--text-muted);" title="Exibir/Ocultar chave" aria-label="Exibir chave" aria-controls="inp-api-key" aria-pressed="false">👁️</button>
                 </div>
             </div>
@@ -3143,6 +3143,90 @@
             onProviderChange();
         }
 
+        let _activeModelsFetchAbort = null;
+
+        function onApiKeyChanged() {
+            const provSelect = document.getElementById("inp-provider");
+            if (provSelect && provSelect.value !== "none") {
+                refreshModelsForProvider(provSelect.value);
+            }
+        }
+
+        async function refreshModelsForProvider(provKey) {
+            if (!provKey || provKey === "none") return;
+            const base = getBackendBaseUrl();
+            if (!base) return;
+
+            if (_activeModelsFetchAbort) {
+                _activeModelsFetchAbort.abort();
+            }
+            _activeModelsFetchAbort = new AbortController();
+            const signal = _activeModelsFetchAbort.signal;
+
+            try {
+                const rawApiKey = (document.getElementById("inp-api-key")?.value || "").trim();
+                let url = `${base}/api/models?provider=${encodeURIComponent(provKey)}`;
+                let fetchOpts = {
+                    method: "GET",
+                    signal,
+                    headers: {
+                        "X-Resume-Client": "jluckmay-github-pages-v1",
+                        "X-Client-Timestamp": Date.now().toString(),
+                    }
+                };
+
+                if (rawApiKey && provKey !== "default") {
+                    fetchOpts.method = "POST";
+                    url = `${base}/api/models`;
+                    const encryptedBody = await encryptTransportPayload({
+                        provider: provKey,
+                        api_key: rawApiKey,
+                    }, "req");
+                    fetchOpts.headers["Content-Type"] = "application/json";
+                    fetchOpts.headers["X-Encrypted-Payload"] = "1";
+                    fetchOpts.body = JSON.stringify(encryptedBody);
+                }
+
+                const res = await fetch(url, fetchOpts);
+                if (!res.ok) return;
+
+                let data = await res.json();
+                if (data && data.enc_version === "ENC_PAYLOAD_V1") {
+                    data = await decryptTransportPayload(data, "resp");
+                }
+
+                if (data && Array.isArray(data.models) && data.models.length > 0) {
+                    if (PROVIDERS_DATA[provKey]) {
+                        PROVIDERS_DATA[provKey].models = data.models;
+                    }
+                    const currentProvSelect = document.getElementById("inp-provider");
+                    const modelSelect = document.getElementById("inp-model");
+                    if (currentProvSelect && currentProvSelect.value === provKey && modelSelect) {
+                        const currentVal = modelSelect.value;
+                        modelSelect.innerHTML = "";
+                        let matched = false;
+                        data.models.forEach(m => {
+                            const opt = document.createElement("option");
+                            opt.value = m.id;
+                            opt.textContent = m.name;
+                            if (m.id === currentVal) {
+                                opt.selected = true;
+                                matched = true;
+                            }
+                            modelSelect.appendChild(opt);
+                        });
+                        if (!matched && modelSelect.options.length > 0) {
+                            modelSelect.options[0].selected = true;
+                        }
+                    }
+                }
+            } catch (err) {
+                if (err.name !== "AbortError") {
+                    // Ignora silenciosamente erros de rede mantendo lista curada
+                }
+            }
+        }
+
         function onProviderChange() {
             const provSelect = document.getElementById("inp-provider");
             if (!provSelect) return;
@@ -3177,6 +3261,7 @@
                 const isEn = state.uiLang === "en-us";
                 keyInput.placeholder = isEn ? provInfo.placeholder_en : provInfo.placeholder;
             }
+            refreshModelsForProvider(provKey);
         }
 
         function toggleKeyVisibility() {
@@ -4011,6 +4096,36 @@
                     badge.className = "pill-badge ok";
                     badge.textContent = "✅ " + (data.latex_version || "pdflatex OK");
                     badge.title = `Backend conectado em: ${displayOrigin}\nCompilador: ${data.latex_version}\nTransporte: 🔒 Criptografado\nClique para configurar`;
+
+                    if (data.providers) {
+                        Object.keys(data.providers).forEach(k => {
+                            if (PROVIDERS_DATA[k] && Array.isArray(data.providers[k].models) && data.providers[k].models.length > 0) {
+                                PROVIDERS_DATA[k].models = data.providers[k].models;
+                            }
+                        });
+                        const currentProv = document.getElementById("inp-provider")?.value;
+                        if (currentProv && PROVIDERS_DATA[currentProv]) {
+                            const modelSelect = document.getElementById("inp-model");
+                            if (modelSelect) {
+                                const currentVal = modelSelect.value;
+                                modelSelect.innerHTML = "";
+                                let matched = false;
+                                PROVIDERS_DATA[currentProv].models.forEach(m => {
+                                    const opt = document.createElement("option");
+                                    opt.value = m.id;
+                                    opt.textContent = m.name;
+                                    if (m.id === currentVal) {
+                                        opt.selected = true;
+                                        matched = true;
+                                    }
+                                    modelSelect.appendChild(opt);
+                                });
+                                if (!matched && modelSelect.options.length > 0) {
+                                    modelSelect.options[0].selected = true;
+                                }
+                            }
+                        }
+                    }
                     return { ok: true, data };
                 } else {
                     throw new Error(data.error || `HTTP ${res.status}`);

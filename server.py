@@ -26,6 +26,7 @@ from src.config import (
     PROVIDERS_CONFIG,
     RECOMMENDED_MODELS,
 )
+from src.model_fetcher import fetch_available_models_for_provider
 from src.pipeline import build_resume_pipeline
 from src._vault import (
     _get_server_key_for_provider,
@@ -290,9 +291,12 @@ def api_status() -> Response | tuple[Response, int]:
     for prov_id, prov_val in PROVIDERS_CONFIG.items():
         prov_dict = dict(prov_val)
         prov_dict.pop("env_vars", None)
+        if prov_id in ("default", "nvidia"):
+            prov_dict["models"] = fetch_available_models_for_provider(prov_id)
         safe_providers[prov_id] = prov_dict
 
     has_nvidia_key = bool(_get_server_key_for_provider("default"))
+    live_models = safe_providers.get("default", {}).get("models") or RECOMMENDED_MODELS
 
     status_data = {
         "status": "ok",
@@ -300,7 +304,7 @@ def api_status() -> Response | tuple[Response, int]:
         "latex_version": latex_ver,
         "has_nvidia_key": has_nvidia_key,
         "providers": safe_providers,
-        "models": RECOMMENDED_MODELS,
+        "models": live_models,
         "service": "latex-resume-backend",
         "encryption": "ENC_PAYLOAD_V1",
     }
@@ -317,6 +321,60 @@ def api_status() -> Response | tuple[Response, int]:
         return resp
 
     return jsonify(status_data)
+
+
+@app.route("/api/models", methods=["GET", "POST", "OPTIONS"])
+def api_models() -> Response | tuple[Response, int]:
+    """Retorna os modelos de IA disponíveis em tempo real para o provedor selecionado."""
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"})
+
+    is_valid, err_msg = _validate_origin_and_referer()
+    if not is_valid:
+        return jsonify({"error": err_msg}), 403
+
+    provider = "default"
+    api_key: str | None = None
+    is_encrypted_transport = False
+
+    if request.method == "POST":
+        payload_data: dict[str, Any] = {}
+        if request.is_json:
+            json_body = request.get_json(silent=True) or {}
+            if json_body.get("enc_version") == "ENC_PAYLOAD_V1":
+                is_encrypted_transport = True
+                payload_data = decrypt_payload_envelope(json_body, direction="req")
+            else:
+                payload_data = json_body
+        else:
+            payload_data = dict(request.form)
+
+        provider = str(payload_data.get("provider") or "default").strip().lower()
+        raw_key = str(payload_data.get("api_key") or "").strip()
+        if raw_key:
+            api_key = raw_key
+    else:
+        provider = str(request.args.get("provider") or "default").strip().lower()
+
+    models = fetch_available_models_for_provider(provider, api_key=api_key)
+
+    resp_data = {
+        "status": "ok",
+        "provider": provider,
+        "models": models,
+    }
+
+    wants_encrypted = (
+        is_encrypted_transport
+        or request.headers.get("X-Encrypted-Payload") == "1"
+    )
+    if wants_encrypted:
+        enc_envelope = encrypt_payload_envelope(resp_data, direction="resp")
+        resp = jsonify(enc_envelope)
+        resp.headers["X-Encrypted-Payload"] = "1"
+        return resp
+
+    return jsonify(resp_data)
 
 
 @app.route("/api/generate", methods=["POST", "OPTIONS"])
