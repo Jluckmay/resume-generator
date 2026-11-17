@@ -1430,9 +1430,10 @@ def _fill_custom_template_deterministically(
 
 ) -> str:
 
-    """Preenche placeholders comuns em templates customizados de forma determinística."""
+    """Preenche placeholders comuns em templates customizados de forma determinística e segura."""
+    from .compiler import sanitize_custom_latex
 
-    res = template_code
+    res = sanitize_custom_latex(template_code)
 
     name = cv.get("name") or "Nome do Candidato"
 
@@ -1440,7 +1441,9 @@ def _fill_custom_template_deterministically(
 
     summary = cv.get("summary") or ""
 
-
+    esc_name = escape_latex(name)
+    esc_title = escape_latex(title)
+    esc_summary = escape_latex(summary)
 
     contact_parts = []
     clean_em = (cv.get("email") or links.get("email") or "").strip()
@@ -1471,21 +1474,19 @@ def _fill_custom_template_deterministically(
         contact_parts.append(rf"\mbox{{\href{{{escape_url(maps_url)}}}{{\faIcon{{map-marker-alt}}\ {escape_latex(cv['location'])}}}}}")
     contact_line = " $\\cdot$ ".join(contact_parts)
 
+    # Substituições case-insensitive seguras de cabeçalho usando callables para evitar injeção de regex
+    res = re.sub(r"(?i)NOME DO CANDIDATO|\[NOME\]|\{\{NAME\}\}|CANDIDATE NAME", lambda _: esc_name, res)
+    res = re.sub(r"(?i)CARGO OU T[IÍ]TULO|\[CARGO\]|\{\{TITLE\}\}|\{\{ROLE\}\}|PROFESSIONAL ROLE", lambda _: esc_title, res)
+    res = re.sub(r"(?i)Links e Contatos|\[CONTATOS\]|\{\{CONTACTS\}\}|CONTACT INFO", lambda _: contact_line, res)
+    res = re.sub(r"(?i)Preencher resumo do candidato\.?|\[RESUMO\]|\{\{SUMMARY\}\}", lambda _: esc_summary, res)
+    if clean_em:
+        res = re.sub(r"(?i)\[EMAIL\]|\{\{EMAIL\}\}", lambda _: escape_latex(clean_em), res)
+    if cv.get("phone"):
+        res = re.sub(r"(?i)\[TELEFONE\]|\[PHONE\]|\{\{PHONE\}\}", lambda _: escape_latex(cv["phone"]), res)
+    if cv.get("location"):
+        res = re.sub(r"(?i)\[LOCALIZA[CÇ][AÃ]O\]|\[CIDADE\]|\[LOCATION\]|\{\{LOCATION\}\}", lambda _: escape_latex(cv["location"]), res)
 
-
-    # Substituições case-insensitive seguras de cabeçalho
-
-    res = re.sub(r"(?i)NOME DO CANDIDATO|\[NOME\]|\{\{NAME\}\}|CANDIDATE NAME", name, res)
-
-    res = re.sub(r"(?i)CARGO OU T[IÍ]TULO|\[CARGO\]|\{\{TITLE\}\}|PROFESSIONAL ROLE", title, res)
-
-    res = re.sub(r"(?i)Links e Contatos|\[CONTATOS\]|\{\{CONTACTS\}\}|CONTACT INFO", contact_line, res)
-
-    res = re.sub(r"(?i)Preencher resumo do candidato\.?|\[RESUMO\]|\{\{SUMMARY\}\}", summary, res)
-
-
-
-    return res
+    return sanitize_custom_latex(res)
 
 
 

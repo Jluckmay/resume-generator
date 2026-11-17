@@ -1495,7 +1495,7 @@
                 <div id="custom-tpl-container" class="hidden" style="margin-top:0.75rem;">
                     <div class="form-group">
                         <label for="custom-tex-file" id="ui-upload-tex-lbl">Arquivo de Template LaTeX (.tex)</label>
-                        <input type="file" id="custom-tex-file" accept=".tex" class="form-control" aria-label="Arquivo de Template LaTeX (.tex)">
+                        <input type="file" id="custom-tex-file" accept=".tex" class="form-control" onchange="onCustomTexSelected(event)" aria-label="Arquivo de Template LaTeX (.tex)">
                     </div>
                     <div class="form-group">
                         <label for="custom-tex-code" id="ui-paste-tex-lbl">Ou cole seu código LaTeX abaixo</label>
@@ -3368,6 +3368,34 @@
             document.getElementById("btn-src-custom").classList.toggle("active", src === "custom");
             document.getElementById("builtin-tpl-container").classList.toggle("hidden", src !== "builtin");
             document.getElementById("custom-tpl-container").classList.toggle("hidden", src !== "custom");
+            const badge = document.getElementById("preview-tpl-badge");
+            if (badge) {
+                badge.textContent = src === "custom" ? "custom.tex" : state.templateId;
+            }
+        }
+
+        function onCustomTexSelected(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!file.name.toLowerCase().endsWith('.tex')) {
+                alert(state.uiLang === "en-us" ? "Only .tex files are accepted." : "Apenas arquivos com extensão .tex são aceitos.");
+                event.target.value = "";
+                return;
+            }
+            if (file.size > 250 * 1024) {
+                alert(state.uiLang === "en-us" ? "Template file exceeds 250 KB limit." : "Arquivo de template excede o limite máximo de 250 KB.");
+                event.target.value = "";
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = e => {
+                const code = e.target.result || "";
+                const codeArea = document.getElementById("custom-tex-code");
+                if (codeArea && !codeArea.value.trim()) {
+                    codeArea.value = code;
+                }
+            };
+            reader.readAsText(file);
         }
 
         function selectTemplate(tplId) {
@@ -3403,6 +3431,13 @@
         function onPhotoSelected(event) {
             const file = event.target.files[0];
             if (!file) {
+                state.photoDataUrl = null;
+                renderLivePreview();
+                return;
+            }
+            if (file.size > 6 * 1024 * 1024) {
+                alert(state.uiLang === "en-us" ? "Profile photo exceeds 6 MB limit." : "A foto de perfil excede o limite máximo de 6 MB.");
+                event.target.value = "";
                 state.photoDataUrl = null;
                 renderLivePreview();
                 return;
@@ -4243,10 +4278,72 @@
                     encryptedKey = await encryptApiKeyForTransit(rawApiKey, providerVal);
                 }
 
-                // Leitura assíncrona segura de arquivos binários e código LaTeX customizado
+                // Validação de segurança e limites de arquivos anexados
                 const activePhotoFile = state.dataMode === "manual"
                     ? (document.getElementById("inp-man-photo")?.files[0] || document.getElementById("inp-photo")?.files[0])
                     : document.getElementById("inp-photo")?.files[0];
+                if (activePhotoFile && activePhotoFile.size > 6 * 1024 * 1024) {
+                    alert(state.uiLang === "en-us" ? "Profile photo exceeds 6 MB limit." : "A foto de perfil excede o limite máximo de 6 MB.");
+                    btn.disabled = false;
+                    btnTxt.textContent = t.genBtn;
+                    return;
+                }
+
+                const lattesFileInput = document.getElementById("inp-lattes-file")?.files[0];
+                if (lattesFileInput && lattesFileInput.size > 10 * 1024 * 1024) {
+                    alert(state.uiLang === "en-us" ? "Lattes file exceeds 10 MB limit." : "O arquivo do Lattes excede o limite máximo de 10 MB.");
+                    btn.disabled = false;
+                    btnTxt.textContent = t.genBtn;
+                    return;
+                }
+
+                const liPdfFileInput = document.getElementById("inp-linkedin-pdf")?.files[0];
+                if (liPdfFileInput && liPdfFileInput.size > 10 * 1024 * 1024) {
+                    alert(state.uiLang === "en-us" ? "LinkedIn PDF exceeds 10 MB limit." : "O PDF do LinkedIn excede o limite máximo de 10 MB.");
+                    btn.disabled = false;
+                    btnTxt.textContent = t.genBtn;
+                    return;
+                }
+
+                let customTexData = null;
+                let customTexCode = "";
+
+                if (state.templateSource === "custom") {
+                    const texFile = document.getElementById("custom-tex-file")?.files[0];
+                    const rawTexCode = (document.getElementById("custom-tex-code")?.value || "").trim();
+                    if (!texFile && !rawTexCode) {
+                        alert(state.uiLang === "en-us"
+                            ? "Please upload a .tex file or paste your custom LaTeX template code."
+                            : "Por favor, selecione um arquivo .tex ou cole o código LaTeX do template customizado.");
+                        btn.disabled = false;
+                        btnTxt.textContent = t.genBtn;
+                        return;
+                    }
+                    if (texFile) {
+                        if (!texFile.name.toLowerCase().endsWith('.tex')) {
+                            alert(state.uiLang === "en-us" ? "Only .tex files are accepted for custom template." : "Apenas arquivos com extensão .tex são aceitos para o template customizado.");
+                            btn.disabled = false;
+                            btnTxt.textContent = t.genBtn;
+                            return;
+                        }
+                        if (texFile.size > 250 * 1024) {
+                            alert(state.uiLang === "en-us" ? "Template file exceeds 250 KB limit." : "Arquivo de template excede o limite máximo de 250 KB.");
+                            btn.disabled = false;
+                            btnTxt.textContent = t.genBtn;
+                            return;
+                        }
+                        customTexData = await readFileAsBase64(texFile);
+                    } else {
+                        if (rawTexCode.length > 250 * 1024) {
+                            alert(state.uiLang === "en-us" ? "Custom LaTeX code exceeds 250 KB limit." : "O código LaTeX customizado excede o limite de 250 KB.");
+                            btn.disabled = false;
+                            btnTxt.textContent = t.genBtn;
+                            return;
+                        }
+                        customTexCode = rawTexCode;
+                    }
+                }
+
                 const photoData = await readFileAsBase64(activePhotoFile);
 
                 let manualData = null;
@@ -4280,17 +4377,6 @@
                 }
                 const lattesData = await readFileAsBase64(document.getElementById("inp-lattes-file").files[0]);
                 const liPdfData = await readFileAsBase64(document.getElementById("inp-linkedin-pdf").files[0]);
-                let customTexData = null;
-                let customTexCode = "";
-
-                if (state.templateSource === "custom") {
-                    const texFile = document.getElementById("custom-tex-file").files[0];
-                    if (texFile) {
-                        customTexData = await readFileAsBase64(texFile);
-                    } else {
-                        customTexCode = document.getElementById("custom-tex-code").value;
-                    }
-                }
 
                 const payload = {
                     resume_type: state.resumeType,

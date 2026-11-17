@@ -1168,13 +1168,12 @@ def _parse_lattes_xml(xml_bytes: bytes, out: Dict[str, Any]) -> None:
         except UnicodeDecodeError:
             text = xml_bytes.decode("iso-8859-1", errors="replace")
 
-    if re.search(r"<!\s*(ENTITY|DOCTYPE)\b", text[:4096], flags=re.IGNORECASE):
+    if re.search(r"<!\s*(ENTITY|DOCTYPE)\b", text, flags=re.IGNORECASE):
         raise ValueError("Declarações DTD/ENTITY bloqueadas por segurança (anti-XXE).")
 
-    try:
+    if defused_ET is not None:
         root = defused_ET.fromstring(text)
-    except Exception:
-        # Fallback com ET apenas se defusedxml falhar (defusedxml já bloqueia XXE/DTD por padrão)
+    else:
         root = ET.fromstring(text)
     id_lattes = root.attrib.get("NUMERO-IDENTIFICADOR", "")
     if id_lattes:
@@ -1488,9 +1487,10 @@ def _extract_pdf_text(pdf_bytes: bytes) -> str:
     for match in re.finditer(rb"stream[\r\n]+(.*?)[\r\n]+endstream", pdf_bytes, re.DOTALL):
         chunk = match.group(1)
         try:
-            decomp = zlib.decompress(chunk)
+            d_obj = zlib.decompressobj()
+            decomp = d_obj.decompress(chunk, max_length=5_000_000)
         except Exception:
-            decomp = chunk
+            decomp = chunk[:50_000]
         for txt_match in re.finditer(rb"\(([^()]{2,200})\)", decomp):
             piece = txt_match.group(1).decode("latin-1", errors="ignore")
             if any(c.isalpha() for c in piece):

@@ -20,21 +20,40 @@ Image.MAX_IMAGE_PIXELS = 25_000_000
 
 # Primitivas LaTeX perigosas bloqueadas em templates customizados (prevenção de RCE e leitura de arquivos)
 _FORBIDDEN_LATEX_PATTERNS = (
+    # Execução de comandos do sistema / RCE
     r"\\write\s*18\b",
-    r"\\immediate\s*\\write\s*18\b",
+    r"\\write\s*\{\s*18\s*\}",
+    r"\\immediate\s*\\write\s*(?:18\b|\{\s*18\s*\})",
+    r"\\csname\s*write\b",
+    r"\\ShellEscape\b",
+    r"\\delayedShellEscape\b",
+    r"\\directlua\b",
+    r"\\pdfprimitive\b",
+    r"\\usepackage\s*(?:\[[^\]]*\])?\s*\{\s*(?:shellesc|catchfile|readprov|currfile|newclude|minted)\s*\}",
+
+    # Primitivas de I/O e manipulação de arquivos
     r"\\openin\b",
     r"\\openout\b",
+    r"\\newread\b",
+    r"\\newwrite\b",
     r"\\read\b",
-    r"\\input\s*\{[^}]*(?:/|\\\\|\.\./|\.\.\\)",  # Bloqueia path traversal em \\input
-    r"\\include\s*\{[^}]*(?:/|\\\\|\.\./|\.\.\\)",  # Bloqueia path traversal em \\include
+    r"\\CatchFileDef\b",
+
+    # Path traversal e leitura externa via \input, \include ou \@@input (com ou sem chaves)
+    r"\\(?:input|include|@@input)\s*\{?[^}\s\n]*(?:/|\\\\|\\|\.\.)",
+    r"\\(?:input|include|@@input)\s*\{?\s*(?:server|app|config|compiler|_vault|vault|pipeline|extractors|llm_client|\.env|requirements|Dockerfile|passwd|shadow|hosts)\b",
     r"\\verbatiminput\b",
     r"\\lstinputlisting\b",
+    r"\\inputminted\b",
     r"\\import\s*\{",
     r"\\subimport\s*\{",
+
+    # Primitivas de driver e macro-redefinição
     r"\\catcode\b",
-    r"\\csname\s*write",
-    r"\\pdfprimitive\b",
-    r"\\directlua\b",
+    r"\\special\s*\{",
+
+    # Links maliciosos com execução de processos locais ou acesso a arquivos no PDF
+    r"\\(?:href|url)\s*\{?\s*(?:run:|file:|javascript:|data:|vbscript:|powershell:|[a-zA-Z0-9_\-\.\/\\]+\.(?:exe|bat|cmd|sh|ps1|vbs|msi)\b)",
 )
 
 _PDFLATEX_UNSUPPORTED_UNICODE = re.compile(
@@ -52,7 +71,7 @@ def sanitize_latex_for_pdflatex(latex_code: str) -> str:
 
 
 def sanitize_custom_latex(latex_code: str) -> str:
-    """Inspeciona e bloqueia primitivas LaTeX perigosas (RCE / Path Traversal / File Read)."""
+    """Inspeciona e bloqueia primitivas LaTeX perigosas (RCE / Path Traversal / File Read / Malicious Links)."""
     if not latex_code:
         return ""
     if len(latex_code) > 250_000:
@@ -60,7 +79,7 @@ def sanitize_custom_latex(latex_code: str) -> str:
     for pat in _FORBIDDEN_LATEX_PATTERNS:
         if re.search(pat, latex_code, flags=re.IGNORECASE):
             raise ValueError(
-                "Template LaTeX bloqueado por segurança: contém comando de sistema ou leitura externa não permitido."
+                "Template LaTeX bloqueado por segurança: contém comando de sistema, leitura externa ou link não permitido."
             )
     return latex_code
 

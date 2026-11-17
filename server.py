@@ -18,7 +18,7 @@ from typing import Any
 
 from flask import Flask, Response, jsonify, request, send_file
 
-from src.compiler import check_latex_compiler, secure_wipe_and_remove_dir
+from src.compiler import check_latex_compiler, sanitize_custom_latex, secure_wipe_and_remove_dir
 from src.config import (
     DEFAULT_MODEL,
     DEFAULT_PROVIDER,
@@ -363,12 +363,36 @@ def api_generate() -> Response | tuple[Response, int]:
 
             # Arquivos decodificados do payload cifrado em memória RAM
             custom_tex: str | None = None
-            if payload_data.get("custom_tex_file") and isinstance(payload_data["custom_tex_file"], dict):
+            if payload_data.get("custom_tex_file"):
                 file_info = payload_data["custom_tex_file"]
-                if file_info.get("data"):
-                    custom_tex = base64.b64decode(file_info["data"]).decode("utf-8", errors="ignore")
+                f_name = ""
+                b64_str = ""
+                if isinstance(file_info, dict):
+                    f_name = str(file_info.get("filename") or "").strip().lower()
+                    b64_str = file_info.get("data") or ""
+                elif isinstance(file_info, str):
+                    if "," in file_info:
+                        header, b64_str = file_info.split(",", 1)
+                        if "name=" in header:
+                            f_name = header.split("name=")[1].split(";")[0].strip().lower()
+                    else:
+                        b64_str = file_info
+                if f_name and not f_name.endswith(".tex"):
+                    raise ValueError("Arquivo de template inválido: apenas arquivos com extensão .tex são permitidos.")
+                if len(b64_str) > 350_000:
+                    raise ValueError("Template LaTeX excede o tamanho máximo permitido (250 KB).")
+                if b64_str:
+                    custom_tex = base64.b64decode(b64_str).decode("utf-8", errors="replace")
             elif payload_data.get("custom_tex_code", "").strip():
-                custom_tex = payload_data.get("custom_tex_code", "").strip()
+                code_str = payload_data.get("custom_tex_code", "").strip()
+                if len(code_str) > 250_000:
+                    raise ValueError("Template LaTeX excede o tamanho máximo permitido (250 KB).")
+                custom_tex = code_str
+
+            if custom_tex is not None:
+                if not any(marker in custom_tex for marker in (r"\documentclass", r"\begin{document}")):
+                    raise ValueError("Template LaTeX inválido: o código deve conter uma estrutura LaTeX reconhecível (\\documentclass ou \\begin{document}).")
+                sanitize_custom_latex(custom_tex)
 
             photo_bytes: bytes | None = None
             if payload_data.get("photo"):
@@ -376,6 +400,8 @@ def api_generate() -> Response | tuple[Response, int]:
                 raw_b64 = p_item.get("data") if isinstance(p_item, dict) else str(p_item)
                 if raw_b64:
                     photo_bytes = base64.b64decode(raw_b64)
+                    if len(photo_bytes) > 6 * 1024 * 1024:
+                        raise ValueError("A imagem de perfil excede o limite máximo de 6 MB.")
 
             lattes_bytes: bytes | None = None
             lattes_fname = ""
@@ -387,6 +413,13 @@ def api_generate() -> Response | tuple[Response, int]:
                         lattes_bytes = base64.b64decode(l_item["data"])
                 elif isinstance(l_item, str) and l_item:
                     lattes_bytes = base64.b64decode(l_item)
+                if lattes_bytes:
+                    if len(lattes_bytes) > 10 * 1024 * 1024:
+                        raise ValueError("Arquivo Lattes excede o limite máximo de 10 MB.")
+                    if lattes_fname:
+                        ext_l = lattes_fname.lower()
+                        if not any(ext_l.endswith(e) for e in (".xml", ".zip", ".pdf")):
+                            raise ValueError("Formato de arquivo Lattes não suportado (apenas .xml, .zip ou .pdf).")
 
             li_pdf_bytes: bytes | None = None
             if payload_data.get("linkedin_pdf"):
@@ -394,6 +427,8 @@ def api_generate() -> Response | tuple[Response, int]:
                 lp_b64 = lp_item.get("data") if isinstance(lp_item, dict) else str(lp_item)
                 if lp_b64:
                     li_pdf_bytes = base64.b64decode(lp_b64)
+                    if len(li_pdf_bytes) > 10 * 1024 * 1024:
+                        raise ValueError("PDF do LinkedIn excede o limite máximo de 10 MB.")
 
             req_linkedin = payload_data.get("linkedin", "")
             req_github = payload_data.get("github", "")
@@ -430,22 +465,49 @@ def api_generate() -> Response | tuple[Response, int]:
 
             custom_tex = None
             if "custom_tex_file" in files and files["custom_tex_file"].filename:
-                custom_tex = files["custom_tex_file"].read().decode("utf-8", errors="ignore")
+                f_item = files["custom_tex_file"]
+                if not f_item.filename.lower().endswith(".tex"):
+                    raise ValueError("Arquivo de template inválido: apenas arquivos com extensão .tex são permitidos.")
+                raw_tex = f_item.read()
+                if len(raw_tex) > 250_000:
+                    raise ValueError("Template LaTeX excede o tamanho máximo permitido (250 KB).")
+                custom_tex = raw_tex.decode("utf-8", errors="replace")
             elif form.get("custom_tex_code", "").strip():
-                custom_tex = form.get("custom_tex_code", "").strip()
+                code_str = form.get("custom_tex_code", "").strip()
+                if len(code_str) > 250_000:
+                    raise ValueError("Template LaTeX excede o tamanho máximo permitido (250 KB).")
+                custom_tex = code_str
+
+            if custom_tex is not None:
+                if not any(marker in custom_tex for marker in (r"\documentclass", r"\begin{document}")):
+                    raise ValueError("Template LaTeX inválido: o código deve conter uma estrutura LaTeX reconhecível (\\documentclass ou \\begin{document}).")
+                sanitize_custom_latex(custom_tex)
 
             photo_bytes = files["photo"].read() if ("photo" in files and files["photo"].filename) else None
+            if photo_bytes and len(photo_bytes) > 6 * 1024 * 1024:
+                raise ValueError("A imagem de perfil excede o limite máximo de 6 MB.")
+
             lattes_bytes = (
                 files["lattes_file"].read()
                 if ("lattes_file" in files and files["lattes_file"].filename)
                 else None
             )
             lattes_fname = files["lattes_file"].filename if ("lattes_file" in files and files["lattes_file"].filename) else ""
+            if lattes_bytes:
+                if len(lattes_bytes) > 10 * 1024 * 1024:
+                    raise ValueError("Arquivo Lattes excede o limite máximo de 10 MB.")
+                if lattes_fname:
+                    ext_lf = lattes_fname.lower()
+                    if not any(ext_lf.endswith(e) for e in (".xml", ".zip", ".pdf")):
+                        raise ValueError("Formato de arquivo Lattes não suportado (apenas .xml, .zip ou .pdf).")
+
             li_pdf_bytes = (
                 files["linkedin_pdf"].read()
                 if ("linkedin_pdf" in files and files["linkedin_pdf"].filename)
                 else None
             )
+            if li_pdf_bytes and len(li_pdf_bytes) > 10 * 1024 * 1024:
+                raise ValueError("PDF do LinkedIn excede o limite máximo de 10 MB.")
 
             req_linkedin = form.get("linkedin", "")
             req_github = form.get("github", "")

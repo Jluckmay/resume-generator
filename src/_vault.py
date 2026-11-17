@@ -279,7 +279,7 @@ def _attest_and_verify_caller(messages: List[Dict[str, str]]) -> None:
 
     matched_mode = None
     for mode in _ALLOWED_MODES:
-        if sys_msg.startswith(mode):
+        if mode in sys_msg or sys_msg.startswith(mode):
             matched_mode = mode
             break
     if not matched_mode:
